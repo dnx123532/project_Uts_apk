@@ -1,25 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_for_us/data/cinema_city_data.dart';
+import 'package:flutter_application_for_us/data/data_film.dart';
+import 'package:flutter_application_for_us/screens/country/city_selection_screen.dart';
+import 'package:flutter_application_for_us/widgets/cinema_card_with_nav.dart';
 import 'package:video_player/video_player.dart';
-import './seat_selection_screen.dart';
-import './main.dart';
-// Import dari file utama — pastikan nama file sesuai
+import '../../models/cinema_model.dart';
+import '../../widgets/info_row.dart';
+import '../../widgets/cast_chip.dart';
 
 // ─── DATA BIOSKOP MEDAN ───────────────────────────────────────────────────────
 // Edit jadwal di sini sesuai kebutuhan
-
-class CinemaSchedule {
-  final String cinemaName;
-  final String screenType;
-  final int price;
-  final List<String> times;
-
-  const CinemaSchedule({
-    required this.cinemaName,
-    required this.screenType,
-    required this.price,
-    required this.times,
-  });
-}
 
 // Fungsi generate tanggal mulai hari ini (7 hari ke depan)
 List<DateTime> getUpcomingDates() {
@@ -32,178 +22,9 @@ String dayName(DateTime date) {
   return days[date.weekday - 1];
 }
 
-// Data bioskop Medan - edit jadwal & harga sesuai kebutuhan
-// DATA BIOSKOP 10 KOTA
-final Map<String, List<CinemaSchedule>> cityCinemas = {
-  'Jakarta': [
-    const CinemaSchedule(
-      cinemaName: 'Grand Indonesia',
-      screenType: 'REGULAR 2D',
-      price: 60000,
-      times: ['12:00', '14:30', '17:00', '19:30'],
-    ),
-    const CinemaSchedule(
-      cinemaName: 'Senayan City',
-      screenType: 'IMAX 2D',
-      price: 85000,
-      times: ['13:00', '16:00', '19:00'],
-    ),
-    const CinemaSchedule(
-      cinemaName: 'Kelapa Gading',
-      screenType: 'VIP 2D',
-      price: 120000,
-      times: ['14:00', '18:00', '20:30'],
-    ),
-  ],
-  'Bandung': [
-    const CinemaSchedule(
-      cinemaName: 'Ciwalk',
-      screenType: 'REGULAR 2D',
-      price: 45000,
-      times: ['12:30', '15:00', '18:00', '20:30'],
-    ),
-    const CinemaSchedule(
-      cinemaName: 'Paris Van Java',
-      screenType: 'REGULAR 2D',
-      price: 50000,
-      times: ['13:15', '16:15', '19:15'],
-    ),
-    const CinemaSchedule(
-      cinemaName: 'Trans Studio Mall',
-      screenType: 'MACRO XE',
-      price: 65000,
-      times: ['14:00', '17:30'],
-    ),
-  ],
-  'Bali': [
-    const CinemaSchedule(
-      cinemaName: 'Beachwalk',
-      screenType: 'REGULAR 2D',
-      price: 60000,
-      times: ['13:00', '16:00', '19:00'],
-    ),
-    const CinemaSchedule(
-      cinemaName: 'Level 21',
-      screenType: 'REGULAR 2D',
-      price: 55000,
-      times: ['12:30', '15:30', '18:30'],
-    ),
-  ],
-  'Balikpapan': [
-    const CinemaSchedule(
-      cinemaName: 'Pentacity',
-      screenType: 'REGULAR 2D',
-      price: 50000,
-      times: ['12:00', '14:30', '17:00'],
-    ),
-    const CinemaSchedule(
-      cinemaName: 'E-Walk',
-      screenType: 'REGULAR 2D',
-      price: 45000,
-      times: ['13:00', '15:30', '18:00'],
-    ),
-  ],
-  'Batam': [
-    const CinemaSchedule(
-      cinemaName: 'Mega Mall',
-      screenType: 'REGULAR 2D',
-      price: 40000,
-      times: ['12:15', '15:15', '18:15'],
-    ),
-    const CinemaSchedule(
-      cinemaName: 'Grand Batam Mall',
-      screenType: 'REGULAR 2D',
-      price: 45000,
-      times: ['13:30', '16:30', '19:30'],
-    ),
-  ],
-  'Bekasi': [
-    const CinemaSchedule(
-      cinemaName: 'Summarecon Mall',
-      screenType: 'IMAX 2D',
-      price: 65000,
-      times: ['12:00', '15:00', '18:00'],
-    ),
-    const CinemaSchedule(
-      cinemaName: 'Mega Bekasi',
-      screenType: 'REGULAR 2D',
-      price: 40000,
-      times: ['13:00', '15:30', '18:30'],
-    ),
-  ],
-  'Bogor': [
-    const CinemaSchedule(
-      cinemaName: 'Botani Square',
-      screenType: 'REGULAR 2D',
-      price: 45000,
-      times: ['12:45', '15:45', '18:45'],
-    ),
-    const CinemaSchedule(
-      cinemaName: 'Cibinong City',
-      screenType: 'REGULAR 2D',
-      price: 40000,
-      times: ['13:15', '16:15', '19:15'],
-    ),
-  ],
-  'Makassar': [
-    const CinemaSchedule(
-      cinemaName: 'Trans Studio Mall',
-      screenType: 'REGULAR 2D',
-      price: 50000,
-      times: ['12:00', '14:30', '17:00'],
-    ),
-    const CinemaSchedule(
-      cinemaName: 'Panakkukang',
-      screenType: 'REGULAR 2D',
-      price: 45000,
-      times: ['13:00', '15:30', '18:00'],
-    ),
-  ],
-  'Palembang': [
-    const CinemaSchedule(
-      cinemaName: 'Palembang Icon',
-      screenType: 'REGULAR 2D',
-      price: 45000,
-      times: ['12:30', '15:00', '17:30'],
-    ),
-    const CinemaSchedule(
-      cinemaName: 'Palembang Square',
-      screenType: 'REGULAR 2D',
-      price: 40000,
-      times: ['13:00', '15:30', '18:00'],
-    ),
-  ],
-  'Medan': [
-    const CinemaSchedule(
-      cinemaName: 'Plaza Medan Fair',
-      screenType: 'REGULAR 2D',
-      price: 44000,
-      times: ['12:00', '13:25', '14:25', '16:50', '19:15', '21:40'],
-    ),
-    const CinemaSchedule(
-      cinemaName: 'Lippo Plaza Medan',
-      screenType: 'REGULAR 2D',
-      price: 37000,
-      times: ['12:00', '14:20', '16:40', '19:00'],
-    ),
-    const CinemaSchedule(
-      cinemaName: 'Sun Plaza',
-      screenType: 'IMAX 2D',
-      price: 65000,
-      times: ['13:00', '16:00', '20:00'],
-    ),
-    const CinemaSchedule(
-      cinemaName: 'Hermes Place',
-      screenType: 'REGULAR 2D',
-      price: 35000,
-      times: ['13:30', '16:00', '18:30'],
-    ),
-  ],
-};
-
-// MOVIE DETAIL SCREEN
+// ─── MOVIE DETAIL SCREEN ──────────────────────────────────────────────────────
 class MovieDetailScreen extends StatefulWidget {
-  // Terima MovieModel dari main.dart
+  // Terima MovieModel dari tixio_app.dart
   final dynamic movie; // pakai dynamic agar fleksibel
 
   const MovieDetailScreen({super.key, required this.movie});
@@ -340,7 +161,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
               child: Image.asset(
                 imagePath,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, _, _) => Container(
                   color: const Color(0xFF1A237E).withOpacity(0.3),
                   child: const Center(
                     child: Icon(Icons.movie, color: Colors.white54, size: 60),
@@ -430,7 +251,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
                     width: 90,
                     height: 120,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       width: 90,
                       height: 120,
                       color: Colors.grey.shade200,
@@ -744,10 +565,10 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
             ),
           ),
           const SizedBox(height: 10),
-          _InfoRow(label: 'Genre', value: genre),
-          _InfoRow(label: 'Durasi', value: duration),
-          _InfoRow(label: 'Tahun', value: year),
-          _InfoRow(label: 'Rating', value: '$rating / 10'),
+          InfoRow(label: 'Genre', value: genre),
+          InfoRow(label: 'Durasi', value: duration),
+          InfoRow(label: 'Tahun', value: year),
+          InfoRow(label: 'Rating', value: '$rating / 10'),
           const SizedBox(height: 20),
 
           // Pemain
@@ -763,7 +584,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
           Wrap(
             spacing: 10,
             runSpacing: 10,
-            children: cast.map((name) => _CastChip(name: name)).toList(),
+            children: cast.map((name) => CastChip(name: name)).toList(),
           ),
           const SizedBox(height: 24),
         ],
@@ -898,8 +719,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
     final t = title.toLowerCase();
     if (t.contains('conjuring') ||
         t.contains('chainsaw') ||
-        t.contains('dark knight'))
+        t.contains('dark knight')) {
       return 'D17';
+    }
     if (t.contains('toy story') || t.contains('look back')) return 'SU';
     return 'D13';
   }
@@ -918,94 +740,10 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
     if (t.contains('toy story')) return 'assets/videos/toystory4.mp4';
     if (t.contains('infinity')) return 'assets/videos/infinitywar.mp4';
     if (t.contains('now you see')) return 'assets/videos/nowyouseeme.mp4';
-    if (t.contains('merah') || t.contains('one for all'))
+    if (t.contains('merah') || t.contains('one for all')) {
       return 'assets/videos/oneforall.mp4';
+    }
     return null;
-  }
-}
-
-// ─── CINEMA CARD ──────────────────────────────────────────────────────────────
-class _CinemaCard extends StatelessWidget {
-  final CinemaSchedule cinema;
-  const _CinemaCard({required this.cinema});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          cinema.cinemaName,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 10),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(14),
-          margin: const EdgeInsets.only(bottom: 16),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade200),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.grey.shade400, width: 4),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    cinema.screenType,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Container(
-                    width: 4,
-                    height: 4,
-                    decoration: const BoxDecoration(
-                      color: Colors.grey,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Rp ${_formatPrice(cinema.price)}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: cinema.times
-                    .map((time) => _TimeChip(time: time))
-                    .toList(),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  String _formatPrice(int price) {
-    final s = price.toString();
-    if (s.length <= 3) return s;
-    return '${s.substring(0, s.length - 3)},${s.substring(s.length - 3)}';
   }
 }
 
@@ -1049,70 +787,6 @@ class _TimeChipState extends State<_TimeChip> {
 }
 
 // ─── CAST CHIP ────────────────────────────────────────────────────────────────
-class _CastChip extends StatelessWidget {
-  final String name;
-  const _CastChip({required this.name});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A237E).withOpacity(0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF1A237E).withOpacity(0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.person_outline, size: 14, color: Color(0xFF1A237E)),
-          const SizedBox(width: 6),
-          Text(
-            name,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Color(0xFF1A237E),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── INFO ROW ─────────────────────────────────────────────────────────────────
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-  const _InfoRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: const TextStyle(color: Colors.grey, fontSize: 13),
-            ),
-          ),
-          const Text(': ', style: TextStyle(color: Colors.grey)),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // ─── DIVIDER ─────────────────────────────────────────────────────────────────
 class _Divider extends StatelessWidget {
