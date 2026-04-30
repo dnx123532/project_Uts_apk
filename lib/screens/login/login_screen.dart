@@ -1,7 +1,7 @@
 // LOGIN SCREEN
 import 'package:flutter/material.dart';
-import 'package:flutter_application_for_us/data/data_film.dart';
-import 'package:flutter_application_for_us/widgets/input_field.dart';
+import 'package:project_uts_apk/data/data_film.dart';
+import 'package:project_uts_apk/widgets/input_field.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

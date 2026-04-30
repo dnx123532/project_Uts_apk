@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_for_us/screens/splash/splash_screen.dart';
+import 'package:project_uts_apk/screens/splash/splash_screen.dart';
 
 class TixioApp extends StatelessWidget {
   const TixioApp({super.key});

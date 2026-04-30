@@ -1,6 +1,6 @@
 // SPLASH SCREEN
 import 'package:flutter/material.dart';
-import 'package:flutter_application_for_us/screens/homes/home_screen.dart';
+import 'package:project_uts_apk/screens/homes/home_screen.dart';
 import 'package:video_player/video_player.dart';
 
 class SplashScreen extends StatefulWidget {

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_for_us/data/data_film.dart';
-import 'package:flutter_application_for_us/screens/bookings/booking_page.dart';
-import 'package:flutter_application_for_us/screens/food_and_beverages/fnb_page.dart';
-import 'package:flutter_application_for_us/screens/login/login_screen.dart';
-import 'package:flutter_application_for_us/screens/movie/cinema_page.dart';
+import 'package:project_uts_apk/data/data_film.dart';
+import 'package:project_uts_apk/screens/bookings/booking_page.dart';
+import 'package:project_uts_apk/screens/food_and_beverages/fnb_page.dart';
+import 'package:project_uts_apk/screens/login/login_screen.dart';
+import 'package:project_uts_apk/screens/movie/cinema_page.dart';
+
 import 'home_content.dart';
 
 // HOME SCREEN

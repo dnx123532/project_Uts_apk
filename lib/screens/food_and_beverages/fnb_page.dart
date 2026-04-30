@@ -1,10 +1,10 @@
 // ─── F&B PAGE FULL FUNGSI ────────────────────────────────────────────────
 import 'package:flutter/material.dart';
-import 'package:flutter_application_for_us/data/cinema_city_data.dart';
-import 'package:flutter_application_for_us/data/data_film.dart';
-import 'package:flutter_application_for_us/models/food_model.dart';
-import 'package:flutter_application_for_us/screens/food_and_beverages/fnb_order_summary_screen.dart';
-import 'package:flutter_application_for_us/screens/food_and_beverages/food_and_beverage_screen.dart';
+import 'package:project_uts_apk/data/cinema_city_data.dart';
+import 'package:project_uts_apk/data/data_film.dart';
+import 'package:project_uts_apk/models/food_model.dart';
+import 'package:project_uts_apk/screens/food_and_beverages/fnb_order_summary_screen.dart';
+import 'package:project_uts_apk/screens/food_and_beverages/food_and_beverage_screen.dart';
 
 class FnBPage extends StatefulWidget {
   const FnBPage({super.key});

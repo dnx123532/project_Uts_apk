@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_for_us/data/cinema_city_data.dart';
-import 'package:flutter_application_for_us/data/data_film.dart';
+import 'package:project_uts_apk/data/cinema_city_data.dart';
+import 'package:project_uts_apk/data/data_film.dart';
 
 class CinemaPage extends StatelessWidget {
   const CinemaPage({super.key});

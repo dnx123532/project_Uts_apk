@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_for_us/screens/payments/payment_process_screen.dart';
-import 'package:flutter_application_for_us/widgets/bottom_action_bar.dart';
-import 'package:flutter_application_for_us/widgets/payment_method_sheet.dart';
-import 'package:flutter_application_for_us/widgets/summary_row.dart';
+import 'package:project_uts_apk/screens/payments/payment_process_screen.dart';
+import 'package:project_uts_apk/widgets/bottom_action_bar.dart';
+import 'package:project_uts_apk/widgets/payment_method_sheet.dart';
+import 'package:project_uts_apk/widgets/summary_row.dart';
 import '../../widgets/icon_text_row.dart';
 import '../../widgets/time_banner.dart';
 

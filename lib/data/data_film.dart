@@ -1,6 +1,6 @@
-import 'package:flutter_application_for_us/models/movie_models.dart';
-import 'package:flutter_application_for_us/providers/auth_provider.dart';
-import 'package:flutter_application_for_us/providers/location_provider.dart';
+import 'package:project_uts_apk/models/movie_models.dart';
+import 'package:project_uts_apk/providers/auth_provider.dart';
+import 'package:project_uts_apk/providers/location_provider.dart';
 
 final AuthState authState = AuthState();
 
