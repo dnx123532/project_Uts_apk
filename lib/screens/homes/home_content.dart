@@ -1,13 +1,13 @@
 // HOME CONTENT
 import 'package:flutter/material.dart';
-import 'package:flutter_application_for_us/data/data_film.dart';
-import 'package:flutter_application_for_us/screens/country/city_selection_screen.dart';
-import 'package:flutter_application_for_us/screens/login/login_screen.dart';
-import 'package:flutter_application_for_us/screens/notification/notification_screen.dart';
-import 'package:flutter_application_for_us/screens/payments/payment_process_screen.dart';
-import 'package:flutter_application_for_us/screens/profile/profile_screen.dart';
-import 'package:flutter_application_for_us/widgets/movie_card.dart';
-import 'package:flutter_application_for_us/widgets/section_header.dart';
+import 'package:project_uts_apk/data/data_film.dart';
+import 'package:project_uts_apk/screens/country/city_selection_screen.dart';
+import 'package:project_uts_apk/screens/login/login_screen.dart';
+import 'package:project_uts_apk/screens/notification/notification_screen.dart';
+import 'package:project_uts_apk/screens/payments/payment_process_screen.dart';
+import 'package:project_uts_apk/screens/profile/profile_screen.dart';
+import 'package:project_uts_apk/widgets/movie_card.dart';
+import 'package:project_uts_apk/widgets/section_header.dart';
 
 import '../movie/movie_detail_screen.dart';
 import '../../widgets/upcoming_card.dart';

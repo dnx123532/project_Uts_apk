@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart ';
-import 'package:flutter_application_for_us/screens/bookings/booking.dart';
-import 'package:flutter_application_for_us/screens/payments/payment_process_screen.dart';
+import 'package:project_uts_apk/screens/bookings/booking.dart';
+import 'package:project_uts_apk/screens/payments/payment_process_screen.dart';
 
 // ─── BOOKING HISTORY PAGE ─────────────────────────────────────────────────────
 // Ganti BookingPage di tixio_app.dart dengan ini

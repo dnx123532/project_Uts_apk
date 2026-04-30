@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:project_uts_apk/screens/Seats/seat_selection_screen.dart';
 // import '../models/cinema_model.dart';
-import 'package:flutter_application_for_us/screens/Seats/seat_selection_screen.dart';
 
 // ─── CINEMA CARD WITH NAV ─────────────────────────────────────────────────────
 class CinemaCardWithNav extends StatefulWidget {

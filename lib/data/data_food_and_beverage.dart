@@ -1,6 +1,6 @@
 // ── DATA MAKANAN — ISI SESUAI MENU ──────────────────────────────────────────
 // Ganti list di bawah ini dengan menu yang sebenarnya
-import 'package:flutter_application_for_us/models/food_model.dart';
+import 'package:project_uts_apk/models/food_model.dart';
 
 final List<FoodItem> allFoodItems = [
   // RECOMMENDED (muncul di bagian atas jika ada item di cart)

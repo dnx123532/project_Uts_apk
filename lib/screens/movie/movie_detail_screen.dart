@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_for_us/data/cinema_city_data.dart';
-import 'package:flutter_application_for_us/data/data_film.dart';
-import 'package:flutter_application_for_us/screens/country/city_selection_screen.dart';
-import 'package:flutter_application_for_us/widgets/cinema_card_with_nav.dart';
+import 'package:project_uts_apk/data/cinema_city_data.dart';
+import 'package:project_uts_apk/data/data_film.dart';
+import 'package:project_uts_apk/screens/country/city_selection_screen.dart';
+import 'package:project_uts_apk/widgets/cinema_card_with_nav.dart';
 import 'package:video_player/video_player.dart';
 import '../../models/cinema_model.dart';
 import '../../widgets/info_row.dart';

@@ -1,6 +1,7 @@
 // Data bioskop Medan - edit jadwal & harga sesuai kebutuhan
 // ─── DATA BIOSKOP 10 KOTA ──────────────────────────────────────────────────
-import 'package:flutter_application_for_us/models/cinema_model.dart';
+
+import 'package:project_uts_apk/models/cinema_model.dart';
 
 final Map<String, List<CinemaSchedule>> cityCinemas = {
   'Jakarta': [

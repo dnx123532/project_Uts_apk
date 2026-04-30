@@ -2,11 +2,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_application_for_us/data/data_food_and_beverage.dart';
-import 'package:flutter_application_for_us/models/food_model.dart';
-import 'package:flutter_application_for_us/screens/payments/payment_screen.dart';
-import 'package:flutter_application_for_us/widgets/qty_control.dart';
-import 'package:flutter_application_for_us/widgets/time_banner.dart';
+import 'package:project_uts_apk/data/data_food_and_beverage.dart';
+import 'package:project_uts_apk/models/food_model.dart';
+import 'package:project_uts_apk/screens/payments/payment_screen.dart';
+import 'package:project_uts_apk/widgets/qty_control.dart';
+import 'package:project_uts_apk/widgets/time_banner.dart';
 
 class FoodBeveragesScreen extends StatefulWidget {
   final dynamic movie;

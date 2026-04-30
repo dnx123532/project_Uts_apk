@@ -1,9 +1,9 @@
 // ─── F&B ORDER SUMMARY SCREEN ────────────────────────────────────────────────
 import 'package:flutter/material.dart';
-import 'package:flutter_application_for_us/data/data_film.dart';
-import 'package:flutter_application_for_us/models/movie_models.dart';
-import 'package:flutter_application_for_us/screens/food_and_beverages/food_and_beverage_screen.dart';
-import 'package:flutter_application_for_us/screens/payments/payment_process_screen.dart';
+import 'package:project_uts_apk/data/data_film.dart';
+import 'package:project_uts_apk/models/movie_models.dart';
+import 'package:project_uts_apk/screens/food_and_beverages/food_and_beverage_screen.dart';
+import 'package:project_uts_apk/screens/payments/payment_process_screen.dart';
 
 class FnBOrderSummaryScreen extends StatefulWidget {
   final String cinemaName;

@@ -1,10 +1,10 @@
 // PROFILE SCREEN - halaman penuh dengan Scaffold sendiri
 import 'package:flutter/material.dart';
-import 'package:flutter_application_for_us/data/data_film.dart';
-import 'package:flutter_application_for_us/screens/login/login_screen.dart';
-import 'package:flutter_application_for_us/screens/payments/payment_process_screen.dart';
-import 'package:flutter_application_for_us/widgets/menu.dart';
-import 'package:flutter_application_for_us/widgets/section_label.dart';
+import 'package:project_uts_apk/data/data_film.dart';
+import 'package:project_uts_apk/screens/login/login_screen.dart';
+import 'package:project_uts_apk/screens/payments/payment_process_screen.dart';
+import 'package:project_uts_apk/widgets/menu.dart';
+import 'package:project_uts_apk/widgets/section_label.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});

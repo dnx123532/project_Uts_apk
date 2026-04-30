@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart ';
-import 'package:flutter_application_for_us/models/booking_model.dart';
-import 'package:flutter_application_for_us/widgets/icon_text_row.dart';
-import 'package:flutter_application_for_us/widgets/ticket_row.dart';
-import 'package:flutter_application_for_us/widgets/white_card.dart';
+import 'package:project_uts_apk/models/booking_model.dart';
+import 'package:project_uts_apk/widgets/icon_text_row.dart';
+import 'package:project_uts_apk/widgets/ticket_row.dart';
+import 'package:project_uts_apk/widgets/white_card.dart';
 
 // ─── BOOKING DETAIL SCREEN ────────────────────────────────────────────────────
 class BookingDetailScreen extends StatelessWidget {

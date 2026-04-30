@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_for_us/screens/food_and_beverages/food_and_beverage_screen.dart';
+import 'package:project_uts_apk/screens/food_and_beverages/food_and_beverage_screen.dart';
 
 // ─── SEAT SELECTION SCREEN ────────────────────────────────────────────────────
 class SeatSelectionScreen extends StatefulWidget {

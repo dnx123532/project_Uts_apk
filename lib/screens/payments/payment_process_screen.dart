@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_for_us/screens/payments/payment_success_screen.dart';
+import 'package:project_uts_apk/screens/payments/payment_success_screen.dart';
 import '../../models/booking_model.dart';
 import '../../../../providers/booking_provider.dart';
 import '../../widgets/time_banner.dart';

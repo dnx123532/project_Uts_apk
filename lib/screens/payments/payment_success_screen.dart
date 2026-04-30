@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart ';
-import 'package:flutter_application_for_us/models/booking_model.dart';
-import 'package:flutter_application_for_us/widgets/dashed_divider.dart';
-import 'package:flutter_application_for_us/widgets/ticket_row.dart';
+import 'package:project_uts_apk/models/booking_model.dart';
+import 'package:project_uts_apk/widgets/dashed_divider.dart';
+import 'package:project_uts_apk/widgets/ticket_row.dart';
 
 // ─── PAYMENT SUCCESS SCREEN ───────────────────────────────────────────────────
 class PaymentSuccessScreen extends StatelessWidget {
