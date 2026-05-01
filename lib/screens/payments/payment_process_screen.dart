@@ -343,7 +343,9 @@ class _PaymentProcessScreenState extends State<PaymentProcessScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFF1A237E).withOpacity(0.3)),
+            // Garis (border) sudah dihilangkan
+            // Diganti dengan background tipis supaya tetap ada pemisah visual
+            color: const Color(0xFF1A237E).withOpacity(0.05),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
