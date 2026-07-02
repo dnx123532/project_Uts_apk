@@ -1,9 +1,12 @@
 // PLACEHOLDER PAGES
 import 'package:flutter/material.dart';
-import 'package:flutter_application_for_us/data/data_film.dart';
-import 'package:flutter_application_for_us/screens/bookings/booking_history_page.dart';
-import 'package:flutter_application_for_us/screens/movie/movie_detail_screen.dart';
-import 'package:flutter_application_for_us/screens/login/login_screen.dart';
+import 'package:project_uts_apk/data/data_film.dart';
+import 'package:project_uts_apk/widgets/app_image.dart';
+import 'package:project_uts_apk/screens/bookings/booking_history_page.dart';
+import 'package:project_uts_apk/screens/movie/movie_detail_screen.dart';
+import 'package:project_uts_apk/screens/login/login_screen.dart';
+import 'package:project_uts_apk/providers/movie_provider.dart';
+import 'package:provider/provider.dart';
 
 class BookingPage extends StatelessWidget {
   const BookingPage({super.key});
@@ -23,7 +26,10 @@ class _MoviePageState extends State<MoviePage> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredMovies = nowShowingMovies
+    final allMovies = context.watch<MovieProvider>().movies;
+
+    // 2. Lakukan penyaringan (filter) dari data API tersebut
+    final filteredMovies = allMovies
         .where((m) => m.title.toLowerCase().contains(search.toLowerCase()))
         .toList();
 
@@ -90,14 +96,12 @@ class _MoviePageState extends State<MoviePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ClipRRect(
+                    AppImage(
+                      path: movie.imagePath,
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
                       borderRadius: BorderRadius.circular(12),
-                      child: Image.asset(
-                        movie.imagePath,
-                        height: 200,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(

@@ -1,13 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_for_us/screens/payments/payment_success_screen.dart';
+import 'package:project_uts_apk/data/data_film.dart';
+import 'package:project_uts_apk/screens/payments/payment_success_screen.dart';
 import '../../models/booking_model.dart';
-import '../../../../providers/booking_provider.dart';
 import '../../widgets/time_banner.dart';
 import '../../widgets/bottom_action_bar.dart';
 import '../../widgets/card_field.dart';
-
-final BookingState bookingState = BookingState();
 
 // ─── PAYMENT PROCESS SCREEN ───────────────────────────────────────────────────
 class PaymentProcessScreen extends StatefulWidget {
@@ -153,8 +151,7 @@ class _PaymentProcessScreenState extends State<PaymentProcessScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      // ignore: deprecated_member_use
-                      color: const Color(0xFF1A237E).withOpacity(0.06),
+                        color: const Color(0xFF1A237E).withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Column(
@@ -219,7 +216,7 @@ class _PaymentProcessScreenState extends State<PaymentProcessScreen> {
               width: 220,
               height: 220,
               fit: BoxFit.contain,
-              errorBuilder: (_, _, _) => Container(
+              errorBuilder: (ctx, e, stack) => Container(
                 width: 220,
                 height: 220,
                 color: Colors.grey.shade100,
@@ -317,7 +314,7 @@ class _PaymentProcessScreenState extends State<PaymentProcessScreen> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: const Color(0xFF1A237E).withOpacity(0.1),
+            color: const Color(0xFF1A237E).withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: const Icon(
@@ -343,7 +340,9 @@ class _PaymentProcessScreenState extends State<PaymentProcessScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFF1A237E).withOpacity(0.3)),
+            // Garis (border) sudah dihilangkan
+            // Diganti dengan background tipis supaya tetap ada pemisah visual
+            color: const Color(0xFF1A237E).withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(

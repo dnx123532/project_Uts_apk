@@ -22,50 +22,50 @@ class PaymentMethodSheetState extends State<PaymentMethodSheet> {
     _selected = widget.selectedMethod;
   }
 
-  static const List<Map<String, dynamic>> _methods = [
+  static const _groups = [
     {
-      'name': 'GoPay',
-      'icon': Icons.account_balance_wallet_outlined,
-      'color': Color(0xFF00AED6),
+      'label': 'E-Wallet',
+      'methods': [
+        {'name': 'GoPay',      'icon': Icons.account_balance_wallet_outlined, 'color': Color(0xFF00AED6)},
+        {'name': 'OVO',        'icon': Icons.account_balance_wallet_rounded,  'color': Color(0xFF4B0082)},
+        {'name': 'Dana',       'icon': Icons.payment_rounded,                  'color': Color(0xFF1976D2)},
+        {'name': 'ShopeePay', 'icon': Icons.shopping_bag_outlined,            'color': Color(0xFFEE4D2D)},
+      ],
     },
     {
-      'name': 'ShopeePay',
-      'icon': Icons.shopping_bag_outlined,
-      'color': Color(0xFFEE4D2D),
-    },
-    {'name': 'QRIS', 'icon': Icons.qr_code_2, 'color': Color(0xFF1A237E)},
-    {
-      'name': 'Credit/Debit Card',
-      'icon': Icons.credit_card_rounded,
-      'color': Color(0xFF1565C0),
+      'label': 'Scan & Pay',
+      'methods': [
+        {'name': 'QRIS', 'icon': Icons.qr_code_2, 'color': Color(0xFF1A237E)},
+      ],
     },
     {
-      'name': 'Transfer Bank',
-      'icon': Icons.account_balance_outlined,
-      'color': Color(0xFF2E7D32),
+      'label': 'Kartu',
+      'methods': [
+        {'name': 'Credit / Debit Card', 'icon': Icons.credit_card_rounded, 'color': Color(0xFF1565C0)},
+      ],
     },
     {
-      'name': 'OVO',
-      'icon': Icons.account_balance_wallet_rounded,
-      'color': Color(0xFF4B0082),
+      'label': 'Transfer Bank',
+      'methods': [
+        {'name': 'Transfer Bank', 'icon': Icons.account_balance_outlined, 'color': Color(0xFF2E7D32)},
+      ],
     },
-    {'name': 'Dana', 'icon': Icons.payment_rounded, 'color': Color(0xFF1976D2)},
   ];
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        color: Color(0xFFF8F9FF),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 12),
+          // Handle bar
           Container(
-            width: 40,
-            height: 4,
+            width: 40, height: 4,
             decoration: BoxDecoration(
               color: Colors.grey.shade300,
               borderRadius: BorderRadius.circular(2),
@@ -73,72 +73,142 @@ class PaymentMethodSheetState extends State<PaymentMethodSheet> {
           ),
           const SizedBox(height: 16),
           const Text(
-            'Payment Method',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            'Pilih Metode Pembayaran',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 8),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _methods.length,
-            separatorBuilder: (_, _) =>
-                const Divider(height: 1, indent: 16, endIndent: 16),
-            itemBuilder: (_, i) {
-              final m = _methods[i];
-              final name = m['name'] as String;
-              return ListTile(
-                leading: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: (m['color'] as Color).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    m['icon'] as IconData,
-                    color: m['color'] as Color,
-                    size: 24,
-                  ),
-                ),
-                title: Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                trailing: Radio<String>(
-                  value: name,
-                  groupValue: _selected,
-                  activeColor: const Color(0xFF1A237E),
-                  onChanged: (v) => setState(() => _selected = v),
-                ),
-                onTap: () => setState(() => _selected = name),
-              );
-            },
+          const SizedBox(height: 16),
+
+          // Groups
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: _groups.map((group) {
+                  final label = group['label'] as String;
+                  final methods = group['methods'] as List;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade500,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: methods.asMap().entries.map((entry) {
+                            final i = entry.key;
+                            final m = entry.value as Map;
+                            final name = m['name'] as String;
+                            final color = m['color'] as Color;
+                            final icon = m['icon'] as IconData;
+                            final isSelected = _selected == name;
+                            final isLast = i == methods.length - 1;
+
+                            return InkWell(
+                              onTap: () => setState(() => _selected = name),
+                              borderRadius: BorderRadius.vertical(
+                                top: i == 0 ? const Radius.circular(16) : Radius.zero,
+                                bottom: isLast ? const Radius.circular(16) : Radius.zero,
+                              ),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? const Color(0xFF1A237E).withValues(alpha: 0.06)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.vertical(
+                                    top: i == 0 ? const Radius.circular(16) : Radius.zero,
+                                    bottom: isLast ? const Radius.circular(16) : Radius.zero,
+                                  ),
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                child: Row(
+                                  children: [
+                                    // Icon bulat
+                                    Container(
+                                      width: 42, height: 42,
+                                      decoration: BoxDecoration(
+                                        color: color.withValues(alpha: 0.12),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(icon, color: color, size: 22),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Text(
+                                        name,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                          color: isSelected ? const Color(0xFF1A237E) : Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                    // Radio custom
+                                    AnimatedContainer(
+                                      duration: const Duration(milliseconds: 180),
+                                      width: 22, height: 22,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: isSelected ? const Color(0xFF1A237E) : Colors.grey.shade300,
+                                          width: isSelected ? 6 : 2,
+                                        ),
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
           ),
-          const SizedBox(height: 12),
+
+          // Tombol Konfirmasi
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
             child: SizedBox(
               width: double.infinity,
-              height: 50,
+              height: 52,
               child: ElevatedButton(
-                onPressed: _selected == null
-                    ? null
-                    : () => widget.onSelected(_selected!),
+                onPressed: _selected == null ? null : () => widget.onSelected(_selected!),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1A237E),
-                  disabledBackgroundColor: Colors.grey.shade300,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  disabledBackgroundColor: Colors.grey.shade200,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 0,
                 ),
-                child: const Text(
-                  'OK',
-                  style: TextStyle(
+                child: Text(
+                  _selected == null ? 'Pilih Metode' : 'Bayar dengan $_selected',
+                  style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

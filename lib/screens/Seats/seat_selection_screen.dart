@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_for_us/screens/food_and_beverages/food_and_beverage_screen.dart';
+import 'package:project_uts_apk/screens/food_and_beverages/food_and_beverage_screen.dart';
+import 'package:project_uts_apk/services/firestore_service.dart';
+import 'package:project_uts_apk/widgets/app_image.dart';
 
-// ─── SEAT SELECTION SCREEN ────────────────────────────────────────────────────
 class SeatSelectionScreen extends StatefulWidget {
   final dynamic movie;
   final String cinemaName;
@@ -25,69 +27,59 @@ class SeatSelectionScreen extends StatefulWidget {
 }
 
 class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
-  // Baris A-M (13 baris), tiap baris 20 kursi
   static const List<String> _rows = [
-    'M',
-    'L',
-    'K',
-    'J',
-    'I',
-    'H',
-    'G',
-    'F',
-    'E',
-    'D',
-    'C',
-    'B',
-    'A',
+    'M','L','K','J','I','H','G','F','E','D','C','B','A',
   ];
 
-  // Kursi yang sudah terisi (simulasi acak)
-  final Set<String> _bookedSeats = {
-    'A4',
-    'A5',
-    'A6',
-    'B8',
-    'B9',
-    'C12',
-    'C13',
-    'C14',
-    'D3',
-    'D4',
-    'E7',
-    'E8',
-    'E9',
-    'E10',
-    'F15',
-    'F16',
-    'G5',
-    'G6',
-    'H11',
-    'H12',
-    'H13',
-    'I2',
-    'I3',
-    'J18',
-    'J19',
-    'K7',
-    'K8',
-    'K9',
-    'L14',
-    'L15',
-    'M1',
-    'M2',
-  };
+  final FirestoreService _firestore = FirestoreService();
 
-  // Kursi yang dipilih user
+  Set<String> _bookedSeats = {};
   final Set<String> _selectedSeats = {};
+  bool _isLoading = true;
+  StreamSubscription<List<String>>? _seatSub;
 
-  // ── Helper ──
+  // Apakah jam tayang sudah lewat
+  bool get _isPast {
+    final parts = widget.time.split(':');
+    final showtime = DateTime(
+      widget.date.year, widget.date.month, widget.date.day,
+      int.parse(parts[0]), int.parse(parts[1]),
+    );
+    return showtime.isBefore(DateTime.now());
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _seatSub = _firestore
+        .streamBookedSeats(widget.cinemaName, widget.date, widget.time)
+        .listen(
+      (seats) {
+        if (mounted) {
+          setState(() {
+            _bookedSeats = seats.toSet();
+            _isLoading = false;
+          });
+        }
+      },
+      onError: (_) {
+        if (mounted) setState(() => _isLoading = false);
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _seatSub?.cancel();
+    super.dispose();
+  }
+
+  // ── Helpers ──
   String _formatDate(DateTime d) {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final day = days[d.weekday - 1];
     final dd = d.day.toString().padLeft(2, '0');
     final mm = d.month.toString().padLeft(2, '0');
-    return '$day, $dd.$mm.${d.year}';
+    return '${days[d.weekday - 1]}, $dd.$mm.${d.year}';
   }
 
   String _formatPrice(int p) {
@@ -98,42 +90,11 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
 
   int get _totalPrice => _selectedSeats.length * widget.price;
 
-  String _getYear(String title) {
-    final t = title.toLowerCase();
-    if (t.contains('endgame')) return '2019';
-    if (t.contains('chainsaw')) return '2024';
-    if (t.contains('dark knight')) return '2008';
-    if (t.contains('look back')) return '2024';
-    if (t.contains('one for all') || t.contains('merah putih')) return '2025';
-    if (t.contains('jujutsu')) return '2021';
-    if (t.contains('now you see me')) return '2013';
-    if (t.contains('conjuring')) return '2013';
-    if (t.contains('toy story')) return '2019';
-    if (t.contains('infinity war')) return '2018';
-    return '2025';
-  }
-
-  String _getAgeRating(String title) {
-    final t = title.toLowerCase();
-    if (t.contains('conjuring') ||
-        t.contains('chainsaw') ||
-        t.contains('dark knight')) {
-      return 'D17';
-    }
-    if (t.contains('toy story') || t.contains('look back')) return 'SU';
-    return 'D13';
-  }
-
-  // ── Build ──
   @override
   Widget build(BuildContext context) {
     final movie = widget.movie;
     final String title = (movie.title ?? '') as String;
-    final String genre = ((movie.genre ?? '') as String)
-        .split(',')
-        .first
-        .trim()
-        .toUpperCase();
+    final String genre = ((movie.genre ?? '') as String).split(',').first.trim().toUpperCase();
     final String duration = (movie.duration ?? '') as String;
     final String imagePath = (movie.imagePath ?? '') as String;
     final double rating = (movie.rating ?? 0.0) as double;
@@ -153,11 +114,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
           children: [
             Text(
               widget.cinemaName,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black),
             ),
             Text(
               '${_formatDate(widget.date)} - ${widget.time} | ${widget.screenType.split(' ').first}',
@@ -166,48 +123,66 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
           ],
         ),
       ),
-      body: Column(
-        children: [
-          // ── Konten scroll ──
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  _buildNotifBanner(),
-                  _buildMovieInfo(title, genre, duration, imagePath, rating),
-                  _buildScreenIndicator(),
-                  const SizedBox(height: 12),
-                  _buildLegend(),
-                  const SizedBox(height: 16),
-                  _buildSeatGrid(),
-                  const SizedBox(height: 24),
-                ],
-              ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF1A237E)))
+          : Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        _buildBanner(),
+                        _buildMovieInfo(title, genre, duration, imagePath, rating),
+                        _buildScreenIndicator(),
+                        const SizedBox(height: 12),
+                        _buildLegend(),
+                        const SizedBox(height: 16),
+                        _buildSeatGrid(),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+                ),
+                _buildBottomBar(),
+              ],
             ),
-          ),
-          // ── Bottom bar ──
-          _buildBottomBar(),
-        ],
-      ),
     );
   }
 
-  // ── Banner peringatan ──
-  Widget _buildNotifBanner() {
+  Widget _buildBanner() {
+    if (_isPast) {
+      return Container(
+        margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.orange.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.orange.shade200),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.access_time_filled, color: Colors.orange.shade700, size: 20),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'Jadwal ini sudah lewat — tidak bisa memesan kursi',
+                style: TextStyle(fontSize: 13, color: Colors.orange),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A237E).withOpacity(0.07),
+        color: const Color(0xFF1A237E).withValues(alpha:0.07),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.warning_amber_rounded,
-            color: Colors.grey.shade500,
-            size: 20,
-          ),
+          Icon(Icons.warning_amber_rounded, color: Colors.grey.shade500, size: 20),
           const SizedBox(width: 10),
           const Expanded(
             child: Text(
@@ -215,20 +190,12 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
               style: TextStyle(fontSize: 13, color: Colors.grey),
             ),
           ),
-          Icon(Icons.close, color: Colors.grey.shade400, size: 18),
         ],
       ),
     );
   }
 
-  // ── Info film ──
-  Widget _buildMovieInfo(
-    String title,
-    String genre,
-    String duration,
-    String imagePath,
-    double rating,
-  ) {
+  Widget _buildMovieInfo(String title, String genre, String duration, String imagePath, double rating) {
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(14),
@@ -236,78 +203,37 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha:0.05), blurRadius: 8, offset: const Offset(0, 2))],
       ),
       child: Row(
         children: [
-          // Poster
-          ClipRRect(
+          AppImage(
+            path: imagePath,
+            width: 80,
+            height: 105,
+            fit: BoxFit.cover,
             borderRadius: BorderRadius.circular(10),
-            child: Image.asset(
-              imagePath,
-              width: 80,
-              height: 105,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
-                width: 80,
-                height: 105,
-                color: Colors.grey.shade200,
-                child: const Icon(Icons.movie, color: Colors.grey),
-              ),
+            errorWidget: Container(
+              width: 80, height: 105, color: Colors.grey.shade200,
+              child: const Icon(Icons.movie, color: Colors.grey),
             ),
           ),
           const SizedBox(width: 14),
-          // Info teks
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title.toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                Text(title.toUpperCase(),
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+                  maxLines: 2, overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 4),
-                Text(
-                  '$genre • $duration',
-                  style: const TextStyle(fontSize: 13, color: Colors.grey),
-                ),
+                Text('$genre • $duration', style: const TextStyle(fontSize: 13, color: Colors.grey)),
                 const SizedBox(height: 8),
-                // Tahun | Age | IDN | Rating
-                Wrap(
-                  spacing: 0,
-                  children: [
-                    Text(_getYear(title), style: const TextStyle(fontSize: 12)),
-                    _pipe(),
-                    Text(
-                      _getAgeRating(title),
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    _pipe(),
-                    const Text('IDN', style: TextStyle(fontSize: 12)),
-                    _pipe(),
-                    const Icon(
-                      Icons.star_rounded,
-                      size: 14,
-                      color: Colors.amber,
-                    ),
-                    const SizedBox(width: 2),
-                    Text(
-                      rating.toString(),
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  ],
-                ),
+                Row(children: [
+                  const Icon(Icons.star_rounded, size: 14, color: Colors.amber),
+                  const SizedBox(width: 4),
+                  Text(rating.toString(), style: const TextStyle(fontSize: 12)),
+                ]),
               ],
             ),
           ),
@@ -316,16 +242,6 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
     );
   }
 
-  Widget _pipe() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 6),
-      width: 1,
-      height: 12,
-      color: Colors.grey.shade300,
-    );
-  }
-
-  // ── Screen indicator ──
   Widget _buildScreenIndicator() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -335,58 +251,43 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
             height: 36,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  const Color(0xFF1A237E).withOpacity(0.18),
-                  const Color(0xFF1A237E).withOpacity(0.04),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+                colors: [const Color(0xFF1A237E).withValues(alpha:0.18), const Color(0xFF1A237E).withValues(alpha:0.04)],
+                begin: Alignment.topCenter, end: Alignment.bottomCenter,
               ),
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(60),
-              ),
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(60)),
             ),
             child: const Center(
-              child: Text(
-                'SCREEN',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF1A237E),
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 3,
-                ),
-              ),
+              child: Text('SCREEN', style: TextStyle(fontSize: 12, color: Color(0xFF1A237E), fontWeight: FontWeight.bold, letterSpacing: 3)),
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
-            'STANDARD',
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey,
-              letterSpacing: 2,
-            ),
-          ),
+          const Text('STANDARD', style: TextStyle(fontSize: 11, color: Colors.grey, letterSpacing: 2)),
         ],
       ),
     );
   }
 
-  // ── Legend ──
   Widget _buildLegend() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _LegendItem(color: const Color(0xFF1A237E), label: 'Tersedia'),
-        const SizedBox(width: 20),
+        if (!_isPast) ...[
+          _LegendItem(color: const Color(0xFF1A237E), label: 'Tersedia'),
+          const SizedBox(width: 16),
+        ],
         _LegendItem(color: Colors.grey.shade400, label: 'Terisi'),
-        const SizedBox(width: 20),
-        const _LegendItem(color: Colors.amber, label: 'Dipilih'),
+        if (!_isPast) ...[
+          const SizedBox(width: 16),
+          const _LegendItem(color: Colors.amber, label: 'Dipilih'),
+        ],
+        if (_isPast) ...[
+          const SizedBox(width: 16),
+          _LegendItem(color: Colors.grey.shade200, label: 'Lewat'),
+        ],
       ],
     );
   }
 
-  // ── Seat Grid ──
   Widget _buildSeatGrid() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -397,41 +298,13 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
             padding: const EdgeInsets.only(bottom: 5),
             child: Row(
               children: [
-                // Label baris kiri
-                SizedBox(
-                  width: 20,
-                  child: Text(
-                    row,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                SizedBox(width: 20, child: Text(row, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold))),
                 const SizedBox(width: 4),
-                // Kursi 1-10 (kiri)
                 ...List.generate(10, (i) => _buildSeat('$row${i + 1}', i + 1)),
-                // Gang tengah
                 const SizedBox(width: 16),
-                // Kursi 11-20 (kanan)
-                ...List.generate(
-                  10,
-                  (i) => _buildSeat('$row${i + 11}', i + 11),
-                ),
+                ...List.generate(10, (i) => _buildSeat('$row${i + 11}', i + 11)),
                 const SizedBox(width: 4),
-                // Label baris kanan
-                SizedBox(
-                  width: 20,
-                  child: Text(
-                    row,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                SizedBox(width: 20, child: Text(row, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold))),
               ],
             ),
           );
@@ -443,11 +316,15 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   Widget _buildSeat(String seatId, int seatNum) {
     final isBooked = _bookedSeats.contains(seatId);
     final isSelected = _selectedSeats.contains(seatId);
+    final isPast = _isPast;
 
-    final Color bgColor;
-    final Color textColor;
+    Color bgColor;
+    Color textColor;
 
-    if (isBooked) {
+    if (isPast) {
+      bgColor = Colors.grey.shade200;
+      textColor = Colors.grey.shade400;
+    } else if (isBooked) {
       bgColor = Colors.grey.shade400;
       textColor = Colors.white;
     } else if (isSelected) {
@@ -458,18 +335,18 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
       textColor = Colors.white;
     }
 
+    final canTap = !isPast && !isBooked;
+
     return GestureDetector(
-      onTap: isBooked
-          ? null
-          : () {
-              setState(() {
+      onTap: canTap
+          ? () => setState(() {
                 if (isSelected) {
                   _selectedSeats.remove(seatId);
                 } else {
                   _selectedSeats.add(seatId);
                 }
-              });
-            },
+              })
+          : null,
       child: Container(
         margin: const EdgeInsets.only(right: 4),
         width: 26,
@@ -479,20 +356,12 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
           borderRadius: BorderRadius.circular(5),
         ),
         child: Center(
-          child: Text(
-            '$seatNum',
-            style: TextStyle(
-              fontSize: 8,
-              color: textColor,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          child: Text('$seatNum', style: TextStyle(fontSize: 8, color: textColor, fontWeight: FontWeight.bold)),
         ),
       ),
     );
   }
 
-  // ── Bottom Bar ──
   Widget _buildBottomBar() {
     final sortedSeats = _selectedSeats.toList()..sort();
 
@@ -500,78 +369,50 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, -4),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha:0.08), blurRadius: 12, offset: const Offset(0, -4))],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Tampilkan kursi terpilih
           if (sortedSeats.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.event_seat_rounded,
-                    size: 16,
-                    color: Color(0xFF1A237E),
-                  ),
+                  const Icon(Icons.event_seat_rounded, size: 16, color: Color(0xFF1A237E)),
                   const SizedBox(width: 6),
                   Expanded(
-                    child: Text(
-                      sortedSeats.join(', '),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF1A237E),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    child: Text(sortedSeats.join(', '),
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF1A237E)),
+                      overflow: TextOverflow.ellipsis),
                   ),
                 ],
               ),
             ),
-
           Row(
             children: [
-              // Info harga
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Total',
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
+                  const Text('Total', style: TextStyle(color: Colors.grey, fontSize: 12)),
                   Text(
-                    sortedSeats.isEmpty
-                        ? 'Pilih kursi'
-                        : _formatPrice(_totalPrice),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A237E),
-                    ),
+                    _isPast
+                        ? 'Jadwal lewat'
+                        : sortedSeats.isEmpty
+                            ? 'Pilih kursi'
+                            : _formatPrice(_totalPrice),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A237E)),
                   ),
                   if (sortedSeats.isNotEmpty)
-                    Text(
-                      '${sortedSeats.length} kursi × ${_formatPrice(widget.price)}',
-                      style: const TextStyle(fontSize: 11, color: Colors.grey),
-                    ),
+                    Text('${sortedSeats.length} kursi × ${_formatPrice(widget.price)}',
+                      style: const TextStyle(fontSize: 11, color: Colors.grey)),
                 ],
               ),
               const Spacer(),
-              // Tombol beli
               ElevatedButton(
-                onPressed: sortedSeats.isEmpty
+                onPressed: (_isPast || sortedSeats.isEmpty)
                     ? null
-                    : () {
-                        Navigator.push(
+                    : () => Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => FoodBeveragesScreen(
@@ -584,27 +425,14 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                               ticketPrice: widget.price,
                             ),
                           ),
-                        );
-                      },
+                        ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1A237E),
                   disabledBackgroundColor: Colors.grey.shade300,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 14,
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                 ),
-                child: const Text(
-                  'Beli Tiket',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: const Text('Beli Tiket', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -614,7 +442,6 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   }
 }
 
-// ─── LEGEND ITEM ──────────────────────────────────────────────────────────────
 class _LegendItem extends StatelessWidget {
   final Color color;
   final String label;
@@ -625,12 +452,8 @@ class _LegendItem extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 16,
-          height: 16,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(4),
-          ),
+          width: 16, height: 16,
+          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
         ),
         const SizedBox(width: 6),
         Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),

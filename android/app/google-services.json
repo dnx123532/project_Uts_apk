@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "441126540998",
+    "project_id": "tixioapp-b5073",
+    "storage_bucket": "tixioapp-b5073.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:441126540998:android:b9d7b639b08164bd0d29c7",
+        "android_client_info": {
+          "package_name": "com.example.project_uts_apk"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "441126540998-ovn4jnhd2u1rucffg40vgevg8nm5hju2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.project_uts_apk",
+            "certificate_hash": "e5bc21ca2f877fd9c885a2d2f994c15e4f678f4b"
+          }
+        },
+        {
+          "client_id": "441126540998-kct3r8q9egh5d5grtn3i52accjnonspa.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCnRK4_U9DpJ3WCwnZI9dw5ca8nY3Pv-dc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "441126540998-kct3r8q9egh5d5grtn3i52accjnonspa.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "441126540998-mapq3ogt31dnao66ni3sdbmeoj7io626.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.projectUtsApk"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

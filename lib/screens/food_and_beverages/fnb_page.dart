@@ -1,10 +1,10 @@
-// ─── F&B PAGE FULL FUNGSI ────────────────────────────────────────────────
 import 'package:flutter/material.dart';
-import 'package:flutter_application_for_us/data/cinema_city_data.dart';
-import 'package:flutter_application_for_us/data/data_film.dart';
-import 'package:flutter_application_for_us/models/food_model.dart';
-import 'package:flutter_application_for_us/screens/food_and_beverages/fnb_order_summary_screen.dart';
-import 'package:flutter_application_for_us/screens/food_and_beverages/food_and_beverage_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:project_uts_apk/data/data_film.dart';
+import 'package:project_uts_apk/models/food_model.dart';
+import 'package:project_uts_apk/providers/food_provider.dart';
+import 'package:project_uts_apk/providers/cinema_provider.dart';
+import 'package:project_uts_apk/screens/food_and_beverages/fnb_order_summary_screen.dart';
 
 class FnBPage extends StatefulWidget {
   const FnBPage({super.key});
@@ -27,10 +27,13 @@ class _FnBPageState extends State<FnBPage> {
     return buf.toString();
   }
 
-  int get _totalPrice {
+  int _totalPrice(List<FoodItem> foodItems) {
     int total = 0;
     _cart.forEach((id, qty) {
-      final item = globalFoodItems.firstWhere((f) => f.id == id);
+      final item = foodItems.firstWhere(
+        (f) => f.id == id,
+        orElse: () => const FoodItem(id: '', name: '', category: '', price: 0),
+      );
       total += item.price * qty;
     });
     return total;
@@ -38,152 +41,112 @@ class _FnBPageState extends State<FnBPage> {
 
   @override
   Widget build(BuildContext context) {
-    final cinemas =
-        cityCinemas[locationState.selectedCity] ?? cityCinemas['Medan']!;
-    _selectedCinema ??= cinemas.first.cinemaName;
+    final cinemas = context.watch<CinemaProvider>().getByCity(locationState.selectedCity);
+    final foodItems = context.watch<FoodProvider>().foodItems;
+    final isLoading = context.watch<FoodProvider>().isLoading;
 
-    final exclusiveCombos = globalFoodItems
-        .where((f) => f.category == 'exclusive_combo')
-        .toList();
-    final combos = globalFoodItems.where((f) => f.category == 'combo').toList();
-    final drinks = globalFoodItems.where((f) => f.category == 'drink').toList();
+    if (cinemas.isNotEmpty) _selectedCinema ??= cinemas.first.cinemaName;
+
+    final exclusiveCombos = foodItems.where((f) => f.category == 'exclusive_combo').toList();
+    final combos = foodItems.where((f) => f.category == 'combo').toList();
+    final drinks = foodItems.where((f) => f.category == 'drink').toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          'Food & Beverages',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: const Text('Food & Beverages', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: Colors.black,
       ),
-      body: Column(
-        children: [
-          // Dropdown Bioskop
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _selectedCinema,
-                isExpanded: true,
-                items: cinemas
-                    .map(
-                      (c) => DropdownMenuItem(
-                        value: c.cinemaName,
-                        child: Text(
-                          '${c.cinemaName}, ${locationState.selectedCity}',
-                        ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF1A237E)))
+          : Column(
+              children: [
+                if (cinemas.isNotEmpty)
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedCinema,
+                        isExpanded: true,
+                        items: cinemas
+                            .map((c) => DropdownMenuItem(
+                                  value: c.cinemaName,
+                                  child: Text('${c.cinemaName}, ${locationState.selectedCity}'),
+                                ))
+                            .toList(),
+                        onChanged: (val) => setState(() {
+                          _selectedCinema = val;
+                          _cart.clear();
+                        }),
                       ),
-                    )
-                    .toList(),
-                onChanged: (val) => setState(() {
-                  _selectedCinema = val;
-                  _cart.clear(); // Reset cart kalau ganti bioskop
-                }),
-              ),
-            ),
-          ),
-
-          // Menu Makanan
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (exclusiveCombos.isNotEmpty)
-                    _buildFoodSection('- EXCLUSIVE COMBO', exclusiveCombos),
-                  if (combos.isNotEmpty) _buildFoodSection('COMBO', combos),
-                  if (drinks.isNotEmpty) _buildFoodSection('DRINKS', drinks),
-                ],
-              ),
-            ),
-          ),
-
-          // Bottom Bar Cart
-          if (_cart.isNotEmpty)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 10,
-                    offset: const Offset(0, -2),
+                    ),
                   ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Total Pembayaran',
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
-                      ),
-                      Text(
-                        _formatPrice(_totalPrice),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Color(0xFF1A237E),
-                        ),
-                      ),
-                    ],
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (exclusiveCombos.isNotEmpty) _buildSection('- EXCLUSIVE COMBO', exclusiveCombos),
+                        if (combos.isNotEmpty) _buildSection('COMBO', combos),
+                        if (drinks.isNotEmpty) _buildSection('DRINKS', drinks),
+                      ],
+                    ),
                   ),
-                  const Spacer(),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => FnBOrderSummaryScreen(
-                            cinemaName: _selectedCinema!,
-                            cart: _cart,
-                            total: _totalPrice,
+                ),
+                if (_cart.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, -2))],
+                    ),
+                    child: Row(
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Total Pembayaran', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                            Text(_formatPrice(_totalPrice(foodItems)), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1A237E))),
+                          ],
+                        ),
+                        const Spacer(),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(
+                              builder: (_) => FnBOrderSummaryScreen(
+                                cinemaName: _selectedCinema ?? '',
+                                cart: _cart,
+                                total: _totalPrice(foodItems),
+                              ),
+                            ));
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1A237E),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
+                          child: const Text('Checkout', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1A237E),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: const Text(
-                      'Checkout',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+              ],
             ),
-        ],
-      ),
     );
   }
 
-  Widget _buildFoodSection(String title, List<FoodItem> items) {
+  Widget _buildSection(String title, List<FoodItem> items) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
+        Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         GridView.builder(
           shrinkWrap: true,
@@ -207,115 +170,52 @@ class _FnBPageState extends State<FnBPage> {
                 children: [
                   Expanded(
                     child: ClipRRect(
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(12),
-                      ),
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                       child: item.imagePath.isNotEmpty
-                          ? Image.asset(
-                              item.imagePath,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                            )
-                          : Container(
-                              color: Colors.grey.shade100,
-                              child: const Icon(
-                                Icons.fastfood,
-                                color: Colors.grey,
-                              ),
-                            ),
+                          ? Image.asset(item.imagePath, fit: BoxFit.cover, width: double.infinity)
+                          : Container(color: Colors.grey.shade100, child: const Icon(Icons.fastfood, color: Colors.grey)),
                     ),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Column(
                       children: [
-                        Text(
-                          item.name,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        Text(item.name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
                         const SizedBox(height: 4),
-                        Text(
-                          _formatPrice(item.price),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
+                        Text(_formatPrice(item.price), style: const TextStyle(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         qty == 0
                             ? SizedBox(
                                 width: double.infinity,
                                 height: 32,
                                 child: ElevatedButton(
-                                  onPressed: () =>
-                                      setState(() => _cart[item.id] = 1),
+                                  onPressed: () => setState(() => _cart[item.id] = 1),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF1A237E),
                                     padding: EdgeInsets.zero,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                                   ),
-                                  child: const Icon(
-                                    Icons.add,
-                                    color: Colors.white,
-                                    size: 18,
-                                  ),
+                                  child: const Icon(Icons.add, color: Colors.white, size: 18),
                                 ),
                               )
                             : Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   GestureDetector(
-                                    onTap: () => setState(() {
-                                      if (qty > 1) {
-                                        _cart[item.id] = qty - 1;
-                                      } else {
-                                        _cart.remove(item.id);
-                                      }
-                                    }),
+                                    onTap: () => setState(() => qty > 1 ? _cart[item.id] = qty - 1 : _cart.remove(item.id)),
                                     child: Container(
                                       padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF1A237E),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: const Icon(
-                                        Icons.remove,
-                                        color: Colors.white,
-                                        size: 18,
-                                      ),
+                                      decoration: BoxDecoration(color: const Color(0xFF1A237E), borderRadius: BorderRadius.circular(4)),
+                                      child: const Icon(Icons.remove, color: Colors.white, size: 18),
                                     ),
                                   ),
-                                  Text(
-                                    '$qty',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
+                                  Text('$qty', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                   GestureDetector(
-                                    onTap: () => setState(
-                                      () => _cart[item.id] = qty + 1,
-                                    ),
+                                    onTap: () => setState(() => _cart[item.id] = qty + 1),
                                     child: Container(
                                       padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF1A237E),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: const Icon(
-                                        Icons.add,
-                                        color: Colors.white,
-                                        size: 18,
-                                      ),
+                                      decoration: BoxDecoration(color: const Color(0xFF1A237E), borderRadius: BorderRadius.circular(4)),
+                                      child: const Icon(Icons.add, color: Colors.white, size: 18),
                                     ),
                                   ),
                                 ],
