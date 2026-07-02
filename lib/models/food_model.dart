@@ -1,11 +1,9 @@
-// ─── DATA MODEL MAKANAN ────────────────────────────────────────────────────────
 class FoodItem {
   final String id;
   final String name;
-  final String
-  category; // 'recommended', 'exclusive_combo', 'combo', 'snack', 'drink'
+  final String category;
   final int price;
-  final String imagePath; // kosong jika belum ada gambar
+  final String imagePath;
   final String? description;
 
   const FoodItem({
@@ -16,4 +14,26 @@ class FoodItem {
     this.imagePath = '',
     this.description,
   });
+
+  factory FoodItem.fromMap(Map<String, dynamic> map) {
+    return FoodItem(
+      id: map['id'] ?? '',
+      name: map['name'] ?? '',
+      category: map['category'] ?? '',
+      price: (map['price'] as num?)?.toInt() ?? 0,
+      imagePath: map['imagePath'] ?? '',
+      description: map['description'],
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'category': category,
+      'price': price,
+      'imagePath': imagePath,
+      'description': description,
+    };
+  }
 }

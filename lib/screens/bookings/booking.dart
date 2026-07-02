@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart ';
 import 'package:project_uts_apk/models/booking_model.dart';
+import 'package:project_uts_apk/providers/movie_provider.dart';
+import 'package:project_uts_apk/widgets/app_image.dart';
 import 'package:project_uts_apk/widgets/icon_text_row.dart';
 import 'package:project_uts_apk/widgets/ticket_row.dart';
 import 'package:project_uts_apk/widgets/white_card.dart';
+import 'package:provider/provider.dart';
 
 // ─── BOOKING DETAIL SCREEN ────────────────────────────────────────────────────
 class BookingDetailScreen extends StatelessWidget {
@@ -30,7 +33,13 @@ class BookingDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String title = (booking.movie.title ?? '') as String;
-    final String imagePath = (booking.movie.imagePath ?? '') as String;
+    final String storedPath = (booking.movie.imagePath ?? '') as String;
+    final movies = context.read<MovieProvider>().movies;
+    final cdnPath = movies
+        .where((m) => m.title.toLowerCase() == title.toLowerCase())
+        .map((m) => m.imagePath)
+        .firstWhere((p) => p.startsWith('http'), orElse: () => storedPath);
+    final String imagePath = cdnPath;
     final int ticketTotal = booking.seats.length * booking.ticketPrice;
     int foodTotal = 0;
     for (final f in booking.foodOrder) {
@@ -64,19 +73,17 @@ class BookingDetailScreen extends StatelessWidget {
             WhiteCard(
               child: Row(
                 children: [
-                  ClipRRect(
+                  AppImage(
+                    path: imagePath,
+                    width: 80,
+                    height: 110,
+                    fit: BoxFit.cover,
                     borderRadius: BorderRadius.circular(10),
-                    child: Image.asset(
-                      imagePath,
+                    errorWidget: Container(
                       width: 80,
                       height: 110,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Container(
-                        width: 80,
-                        height: 110,
-                        color: Colors.grey.shade200,
-                        child: const Icon(Icons.movie, color: Colors.grey),
-                      ),
+                      color: Colors.grey.shade200,
+                      child: const Icon(Icons.movie, color: Colors.grey),
                     ),
                   ),
                   const SizedBox(width: 14),

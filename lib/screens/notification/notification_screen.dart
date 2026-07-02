@@ -1,6 +1,6 @@
 // ─── NOTIFICATION SCREEN ──────────────────────────────────────────────────────
 import 'package:flutter/material.dart';
-import 'package:project_uts_apk/screens/payments/payment_process_screen.dart';
+import 'package:project_uts_apk/data/data_film.dart';
 
 class NotificationScreen extends StatelessWidget {
   const NotificationScreen({super.key});

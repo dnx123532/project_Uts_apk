@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart ';
 import 'package:project_uts_apk/models/booking_model.dart';
+import 'package:project_uts_apk/providers/movie_provider.dart';
+import 'package:project_uts_apk/widgets/app_image.dart';
 import 'package:project_uts_apk/widgets/dashed_divider.dart';
 import 'package:project_uts_apk/widgets/ticket_row.dart';
+import 'package:provider/provider.dart';
 
 // ─── PAYMENT SUCCESS SCREEN ───────────────────────────────────────────────────
 class PaymentSuccessScreen extends StatelessWidget {
@@ -29,7 +32,12 @@ class PaymentSuccessScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String title = (booking.movie.title ?? '') as String;
-    final String imagePath = (booking.movie.imagePath ?? '') as String;
+    final String storedPath = (booking.movie.imagePath ?? '') as String;
+    final movies = context.read<MovieProvider>().movies;
+    final String imagePath = movies
+        .where((m) => m.title.toLowerCase() == title.toLowerCase())
+        .map((m) => m.imagePath)
+        .firstWhere((p) => p.startsWith('http'), orElse: () => storedPath);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -98,22 +106,17 @@ class PaymentSuccessScreen extends StatelessWidget {
                             ),
                             child: Row(
                               children: [
-                                ClipRRect(
+                                AppImage(
+                                  path: imagePath,
+                                  width: 60,
+                                  height: 80,
+                                  fit: BoxFit.cover,
                                   borderRadius: BorderRadius.circular(8),
-                                  child: Image.asset(
-                                    imagePath,
+                                  errorWidget: Container(
                                     width: 60,
                                     height: 80,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, _, _) => Container(
-                                      width: 60,
-                                      height: 80,
-                                      color: Colors.white24,
-                                      child: const Icon(
-                                        Icons.movie,
-                                        color: Colors.white54,
-                                      ),
-                                    ),
+                                    color: Colors.white24,
+                                    child: const Icon(Icons.movie, color: Colors.white54),
                                   ),
                                 ),
                                 const SizedBox(width: 14),

@@ -1,17 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
 import 'package:project_uts_apk/screens/homes/Tixio_apps.dart';
 import 'providers/auth_provider.dart';
-import 'providers/booking_provider.dart';
 import 'providers/location_provider.dart';
+import 'providers/movie_provider.dart';
+import 'providers/food_provider.dart';
+import 'providers/cinema_provider.dart';
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-void main() {
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthState()),
-        ChangeNotifierProvider(create: (_) => BookingState()),
         ChangeNotifierProvider(create: (_) => LocationState()),
+        ChangeNotifierProvider(create: (_) => MovieProvider()),
+        ChangeNotifierProvider(create: (_) => FoodProvider()),
+        ChangeNotifierProvider(create: (_) => CinemaProvider()),
       ],
       child: const TixioApp(),
     ),

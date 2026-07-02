@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:project_uts_apk/screens/payments/payment_process_screen.dart';
+import 'package:project_uts_apk/widgets/app_image.dart';
 import 'package:project_uts_apk/widgets/bottom_action_bar.dart';
 import 'package:project_uts_apk/widgets/payment_method_sheet.dart';
 import 'package:project_uts_apk/widgets/summary_row.dart';
@@ -40,8 +41,20 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
   Timer? _timer;
   String? _selectedPayment;
 
-  // Biaya layanan tetap
   static const int _serviceFee = 3500;
+
+  // Promo
+  final _promoCtrl = TextEditingController();
+  String? _promoCode;
+  int _promoDiscount = 0;
+  String? _promoError;
+
+  static const _validPromos = {
+    'TIXIO10':  {'label': 'Diskon 10%',       'type': 'pct',   'value': 10},
+    'HEMAT20':  {'label': 'Diskon 20%',        'type': 'pct',   'value': 20},
+    'NEWUSER':  {'label': 'Potongan Rp 15.000','type': 'flat',  'value': 15000},
+    'STUDENT':  {'label': 'Potongan Rp 10.000','type': 'flat',  'value': 10000},
+  };
 
   @override
   void initState() {
@@ -52,7 +65,34 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _promoCtrl.dispose();
     super.dispose();
+  }
+
+  void _applyPromo() {
+    final code = _promoCtrl.text.trim().toUpperCase();
+    final promo = _validPromos[code];
+    if (promo == null) {
+      setState(() { _promoCode = null; _promoDiscount = 0; _promoError = 'Kode promo tidak valid'; });
+      return;
+    }
+    final base = _ticketSubtotal + _foodSubtotal + _serviceFee;
+    final type = promo['type'] as String;
+    final value = promo['value'] as int;
+    int discount = type == 'pct' ? (base * value ~/ 100) : value;
+    final maxDiscount = base - 1000;
+    if (discount > maxDiscount) discount = maxDiscount > 0 ? maxDiscount : 0;
+    if (discount < 0) discount = 0;
+    setState(() {
+      _promoCode = code;
+      _promoDiscount = discount;
+      _promoError = null;
+    });
+    FocusScope.of(context).unfocus();
+  }
+
+  void _removePromo() {
+    setState(() { _promoCode = null; _promoDiscount = 0; _promoError = null; _promoCtrl.clear(); });
   }
 
   void _startTimer() {
@@ -100,7 +140,10 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
     return t;
   }
 
-  int get _grandTotal => _ticketSubtotal + _foodSubtotal + _serviceFee;
+  int get _grandTotal {
+    final raw = _ticketSubtotal + _foodSubtotal + _serviceFee - _promoDiscount;
+    return raw < 0 ? 0 : raw;
+  }
 
   void _openPaymentMethod() {
     showModalBottomSheet(
@@ -197,22 +240,17 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       children: [
-                        ClipRRect(
+                        AppImage(
+                          path: imagePath,
+                          width: 90,
+                          height: 120,
+                          fit: BoxFit.cover,
                           borderRadius: BorderRadius.circular(10),
-                          child: Image.asset(
-                            imagePath,
+                          errorWidget: Container(
                             width: 90,
                             height: 120,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Container(
-                              width: 90,
-                              height: 120,
-                              color: Colors.grey.shade200,
-                              child: const Icon(
-                                Icons.movie,
-                                color: Colors.grey,
-                              ),
-                            ),
+                            color: Colors.grey.shade200,
+                            child: const Icon(Icons.movie, color: Colors.grey),
                           ),
                         ),
                         const SizedBox(width: 14),
@@ -303,6 +341,15 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                     value: _fmt(_serviceFee),
                     isGrey: true,
                   ),
+                  // Diskon promo jika ada
+                  if (_promoDiscount > 0)
+                    SummaryRow(
+                      label: 'Promo $_promoCode',
+                      value: '- ${_fmt(_promoDiscount)}',
+                      isGrey: false,
+                      isBold: false,
+                      valueColor: Colors.green,
+                    ),
                   SummaryRow(
                     label: 'Total Pembayaran',
                     value: _fmt(_grandTotal),
@@ -317,7 +364,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                     margin: const EdgeInsets.symmetric(horizontal: 16),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1A237E).withOpacity(0.06),
+                      color: const Color(0xFF1A237E).withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Text(
@@ -328,50 +375,146 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                   ),
 
                   const SizedBox(height: 20),
-                  const Divider(height: 1, color: Color(0xFFEEEEEE)),
 
-                  // Promo/Voucher
-                  ListTile(
-                    onTap: () {},
-                    title: const Text(
-                      'Promo/Voucher',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-                    subtitle: const Text(
-                      'Kamu belum memilih promo',
-                      style: TextStyle(fontSize: 13, color: Colors.grey),
-                    ),
-                    trailing: const Icon(
-                      Icons.chevron_right,
-                      color: Colors.grey,
+                  // ── Promo Code Input ──────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Kode Promo',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Coba: TIXIO10 · HEMAT20 · NEWUSER · STUDENT',
+                          style: TextStyle(fontSize: 11, color: Colors.grey),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _promoCtrl,
+                                textCapitalization: TextCapitalization.characters,
+                                enabled: _promoCode == null,
+                                decoration: InputDecoration(
+                                  hintText: 'Masukkan kode promo',
+                                  hintStyle: const TextStyle(fontSize: 13),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: Colors.grey.shade300),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFF1A237E), width: 1.5),
+                                  ),
+                                  errorText: _promoError,
+                                  filled: _promoCode != null,
+                                  fillColor: Colors.green.withValues(alpha: 0.06),
+                                  suffixIcon: _promoCode != null
+                                      ? const Icon(Icons.check_circle_rounded, color: Colors.green)
+                                      : null,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            _promoCode != null
+                                ? OutlinedButton(
+                                    onPressed: _removePromo,
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.red,
+                                      side: const BorderSide(color: Colors.red),
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    ),
+                                    child: const Text('Hapus'),
+                                  )
+                                : ElevatedButton(
+                                    onPressed: _applyPromo,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF1A237E),
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      elevation: 0,
+                                    ),
+                                    child: const Text('Pakai', style: TextStyle(color: Colors.white)),
+                                  ),
+                          ],
+                        ),
+                        if (_promoCode != null) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              const Icon(Icons.local_offer_rounded, size: 14, color: Colors.green),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${_validPromos[_promoCode]!['label']} berhasil diterapkan!',
+                                style: const TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
                     ),
                   ),
 
-                  const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                  const SizedBox(height: 20),
 
-                  // Metode pembayaran
-                  ListTile(
-                    onTap: _openPaymentMethod,
-                    title: const Text(
-                      'Pilih Metode Pembayaran',
-                      style: TextStyle(color: Colors.grey, fontSize: 13),
-                    ),
-                    subtitle: Text(
-                      _selectedPayment == null
-                          ? _fmt(_grandTotal)
-                          : '$_selectedPayment  •  ${_fmt(_grandTotal)}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                  // ── Metode Pembayaran ─────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: GestureDetector(
+                      onTap: _openPaymentMethod,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: _selectedPayment != null
+                                ? const Color(0xFF1A237E).withValues(alpha: 0.4)
+                                : Colors.grey.shade200,
+                          ),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40, height: 40,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1A237E).withValues(alpha: 0.08),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.payment_rounded, color: Color(0xFF1A237E), size: 20),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Metode Pembayaran',
+                                      style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _selectedPayment ?? 'Belum dipilih',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: _selectedPayment != null ? Colors.black87 : Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(Icons.chevron_right,
+                                color: _selectedPayment != null ? const Color(0xFF1A237E) : Colors.grey),
+                          ],
+                        ),
                       ),
-                    ),
-                    trailing: const Icon(
-                      Icons.chevron_right,
-                      color: Colors.grey,
                     ),
                   ),
 

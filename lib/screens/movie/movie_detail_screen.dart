@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:project_uts_apk/data/cinema_city_data.dart';
 import 'package:project_uts_apk/data/data_film.dart';
+import 'package:project_uts_apk/providers/cinema_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:project_uts_apk/screens/country/city_selection_screen.dart';
 import 'package:project_uts_apk/widgets/cinema_card_with_nav.dart';
 import 'package:video_player/video_player.dart';
@@ -53,31 +54,30 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
     super.dispose();
   }
 
-  List<CinemaSchedule> get filteredCinemas {
-    // Tarik data bioskop sesuai kota yang dipilih. Kalau error/kosong, fallback ke Medan
-    final cinemasInCity =
-        cityCinemas[locationState.selectedCity] ?? cityCinemas['Medan']!;
-
+  List<CinemaSchedule> filteredCinemas(BuildContext context) {
+    final cinemasInCity = context.watch<CinemaProvider>().getByCity(locationState.selectedCity);
     if (_selectedScreenType == 'All') return cinemasInCity;
-    return cinemasInCity
-        .where((c) => c.screenType.contains(_selectedScreenType))
-        .toList();
+    return cinemasInCity.where((c) => c.screenType.contains(_selectedScreenType)).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     final movie = widget.movie;
-    // Ambil field dari movie, dengan fallback aman
-    final String title = movie.title ?? '';
-    final String genre = movie.genre ?? '';
-    final String duration = movie.duration ?? '';
-    final double rating = movie.rating ?? 0.0;
-    final String imagePath = movie.imagePath ?? '';
-    final String synopsis = _getSynopsis(title);
-    final List<String> cast = _getCast(title);
-    final String year = _getYear(title);
-    final String ageRating = _getAgeRating(title);
-    final String? trailerPath = _getTrailerPath(title);
+
+    // Ambil data langsung dari objek movie dengan super bersih!
+    final String title = movie.title;
+    final String genre = movie.genre;
+    final String duration = movie.duration;
+    final double rating = movie.rating;
+    final String imagePath = movie.imagePath;
+    final String synopsis = movie.synopsis;
+    final String year = movie.year;
+    final String ageRating = movie.ageRating;
+    final String? trailerPath = movie.trailerPath;
+
+    // Memecah teks cast dari API (String) menjadi daftar List<String>
+    // agar perulangan di UI lu tetap berjalan lancar.
+    final List<String> cast = movie.cast.isEmpty ? [] : movie.cast.split(', ');
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -193,13 +193,37 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
                 onPressed: () => Navigator.pop(context),
               ),
             ),
-            // Wishlist button
+            // Watchlist button
             Positioned(
               top: 40,
               right: 12,
-              child: IconButton(
-                icon: const Icon(Icons.favorite_border, color: Colors.white),
-                onPressed: () {},
+              child: AnimatedBuilder(
+                animation: watchlistState,
+                builder: (context, _) {
+                  final inList = watchlistState.isInWatchlist(title);
+                  return IconButton(
+                    icon: Icon(
+                      inList ? Icons.favorite_rounded : Icons.favorite_border,
+                      color: inList ? Colors.red : Colors.white,
+                    ),
+                    onPressed: () {
+                      if (!authState.isLoggedIn) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Login dulu untuk menyimpan watchlist')),
+                        );
+                        return;
+                      }
+                      watchlistState.toggle(title);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(inList ? 'Dihapus dari watchlist' : 'Ditambahkan ke watchlist'),
+                          duration: const Duration(seconds: 1),
+                          backgroundColor: inList ? Colors.grey : const Color(0xFF1A237E),
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
             ),
             // Play trailer button (tengah)
@@ -509,13 +533,19 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
           const SizedBox(height: 8),
 
           // Daftar bioskop
-          ...filteredCinemas.map(
-            (cinema) => CinemaCardWithNav(
-              cinema: cinema,
-              movie: widget.movie,
-              selectedDate: _dates[_selectedDateIndex],
+          if (context.watch<CinemaProvider>().isLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator(color: Color(0xFF1A237E))),
+            )
+          else
+            ...filteredCinemas(context).map(
+              (cinema) => CinemaCardWithNav(
+                cinema: cinema,
+                movie: widget.movie,
+                selectedDate: _dates[_selectedDateIndex],
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -601,151 +631,10 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
       ),
     );
   }
-
-  // ── HELPER: data sinopsis & cast per film ─────────────────────────────────
-  // ✏️ Edit sinopsis & cast sesuai film kamu
-  String _getSynopsis(String title) {
-    final t = title.toLowerCase();
-    if (t.contains('avengers') && t.contains('endgame')) {
-      return 'Setelah Thanos menggunakan Infinity Gauntlet untuk membinasakan setengah dari semua kehidupan, para Avengers yang tersisa harus menemukan cara untuk mengalahkannya sekali lagi.';
-    } else if (t.contains('chainsaw')) {
-      return 'Denji adalah seorang pemuda miskin yang terjerat hutang ayahnya kepada Yakuza. Dengan bantuan anjing iblis Pochita, ia menjadi Chainsaw Man demi bertahan hidup.';
-    } else if (t.contains('dark knight')) {
-      return 'Batman menghadapi musuh terbesar dalam hidupnya — Joker, seorang kriminal jenius yang bertujuan menebarkan kekacauan dan menguji batas moral Gotham City.';
-    } else if (t.contains('look back')) {
-      return 'Fujino dan Kyomoto, dua anak yang sama-sama mencintai manga, menjalani perjalanan hidup yang saling bersilangan meski dengan jalan yang berbeda.';
-    } else if (t.contains('jujutsu')) {
-      return 'Yuta Okkotsu dikutuk oleh arwah gadis yang ia cintai. Di bawah bimbingan Satoru Gojo, ia bergabung dengan sekolah jujutsu untuk menguasai kekuatannya.';
-    } else if (t.contains('conjuring')) {
-      return 'Pasangan paranormal Ed dan Lorraine Warren menyelidiki serangkaian kejadian misterius di sebuah rumah pertanian di Rhode Island yang dihuni oleh keluarga Perron.';
-    } else if (t.contains('toy story')) {
-      return 'Woody bertemu boneka baru bernama Forky yang tidak menganggap dirinya mainan. Petualangan seru pun dimulai ketika Forky melarikan diri dari pemilik barunya, Bonnie.';
-    } else if (t.contains('infinity war')) {
-      return 'Thanos memulai misinya untuk mengumpulkan semua Infinity Stone. Para Avengers dan sekutu-sekutunya bersatu untuk mencegah kehancuran alam semesta.';
-    } else if (t.contains('now you see me')) {
-      return 'Empat pesulap melakukan pertunjukan yang menguras bank sungguhan dan menyebarkan uangnya ke penonton. Agen FBI pun mengejar mereka.';
-    } else if (t.contains('merah putih') || t.contains('one for all')) {
-      return 'Kisah perjuangan para prajurit Indonesia dalam mempertahankan kemerdekaan dengan semangat persatuan dan keberanian yang tak pernah padam.';
-    }
-    return 'Nikmati pengalaman sinematik yang luar biasa. Film ini menghadirkan cerita yang memukau dengan visual yang menakjubkan dan akting memukau dari para pemain.';
-  }
-
-  List<String> _getCast(String title) {
-    final t = title.toLowerCase();
-    if (t.contains('avengers') && t.contains('endgame')) {
-      return [
-        'Robert Downey Jr.',
-        'Chris Evans',
-        'Scarlett Johansson',
-        'Mark Ruffalo',
-        'Chris Hemsworth',
-        'Josh Brolin',
-      ];
-    } else if (t.contains('chainsaw')) {
-      return [
-        'Kikunosuke Toya',
-        'Tomori Kusunoki',
-        'Mariya Ise',
-        'Shiori Izawa',
-      ];
-    } else if (t.contains('dark knight')) {
-      return [
-        'Christian Bale',
-        'Heath Ledger',
-        'Aaron Eckhart',
-        'Maggie Gyllenhaal',
-        'Gary Oldman',
-      ];
-    } else if (t.contains('look back')) {
-      return ['Mizuki Yoshida', 'Genya Aoki'];
-    } else if (t.contains('jujutsu')) {
-      return [
-        'Megumi Ogata',
-        'Kana Hanazawa',
-        'Takahiro Sakurai',
-        'Yuichi Nakamura',
-      ];
-    } else if (t.contains('conjuring')) {
-      return [
-        'Patrick Wilson',
-        'Vera Farmiga',
-        'Ron Livingston',
-        'Lili Taylor',
-      ];
-    } else if (t.contains('toy story')) {
-      return [
-        'Tom Hanks',
-        'Tim Allen',
-        'Annie Potts',
-        'Tony Hale',
-        'Keegan-Michael Key',
-      ];
-    } else if (t.contains('infinity war')) {
-      return [
-        'Robert Downey Jr.',
-        'Chris Hemsworth',
-        'Mark Ruffalo',
-        'Chris Evans',
-        'Benedict Cumberbatch',
-      ];
-    } else if (t.contains('now you see me')) {
-      return [
-        'Jesse Eisenberg',
-        'Mark Ruffalo',
-        'Woody Harrelson',
-        'Isla Fisher',
-        'Dave Franco',
-      ];
-    }
-    return ['Pemain 1', 'Pemain 2', 'Pemain 3'];
-  }
-
-  String _getYear(String title) {
-    final t = title.toLowerCase();
-    if (t.contains('endgame')) return '2019';
-    if (t.contains('chainsaw')) return '2024';
-    if (t.contains('dark knight')) return '2008';
-    if (t.contains('look back')) return '2024';
-    if (t.contains('one for all') || t.contains('merah putih')) return '2025';
-    if (t.contains('jujutsu')) return '2021';
-    if (t.contains('now you see me')) return '2013';
-    if (t.contains('conjuring')) return '2013';
-    if (t.contains('toy story')) return '2019';
-    if (t.contains('infinity war')) return '2018';
-    return '2025';
-  }
-
-  String _getAgeRating(String title) {
-    final t = title.toLowerCase();
-    if (t.contains('conjuring') ||
-        t.contains('chainsaw') ||
-        t.contains('dark knight')) {
-      return 'D17';
-    }
-    if (t.contains('toy story') || t.contains('look back')) return 'SU';
-    return 'D13';
-  }
-
-  // ✏️ Ganti path trailer sesuai assets kamu
-  String? _getTrailerPath(String title) {
-    final t = title.toLowerCase();
-    // Contoh: return 'assets/trailers/endgame.mp4';
-    // Kembalikan null jika film tidak punya trailer
-    if (t.contains('endgame')) return 'assets/videos/avengerendgame.mp4';
-    if (t.contains('chainsaw')) return 'assets/videos/chainsawman.mp4';
-    if (t.contains('dark knight')) return 'assets/videos/thedarkknight.mp4';
-    if (t.contains('look back')) return 'assets/videos/lookback.mp4';
-    if (t.contains('jujutsu')) return 'assets/videos/jujutsukaisen.mp4';
-    if (t.contains('conjuring')) return 'assets/videos/theconjuring.mp4';
-    if (t.contains('toy story')) return 'assets/videos/toystory4.mp4';
-    if (t.contains('infinity')) return 'assets/videos/infinitywar.mp4';
-    if (t.contains('now you see')) return 'assets/videos/nowyouseeme.mp4';
-    if (t.contains('merah') || t.contains('one for all')) {
-      return 'assets/videos/oneforall.mp4';
-    }
-    return null;
-  }
 }
+
+// ── HELPER: data sinopsis & cast per film ─────────────────────────────────
+// ✏️ Edit sinopsis & cast sesuai film kamu
 
 // ─── TIME CHIP ────────────────────────────────────────────────────────────────
 class _TimeChip extends StatefulWidget {

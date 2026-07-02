@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tixio – Seed Firestore</title>
+  <style>
+    body { font-family: sans-serif; max-width: 640px; margin: 40px auto; padding: 0 16px; }
+    h2  { color: #1A237E; }
+    button { background: #1A237E; color: #fff; border: none; padding: 12px 28px;
+             font-size: 16px; border-radius: 8px; cursor: pointer; margin-top: 16px; }
+    button:disabled { background: #9e9e9e; cursor: not-allowed; }
+    #log { background: #f5f5f5; border-radius: 8px; padding: 16px; margin-top: 24px;
+           min-height: 80px; white-space: pre-wrap; font-size: 13px; font-family: monospace; }
+    .ok  { color: #2e7d32; }
+    .err { color: #c62828; }
+  </style>
+</head>
+<body>
+  <h2>🎬 Tixio – Seed Firestore</h2>
+  <p>Klik tombol di bawah untuk mengisi data Food Items dan Cinemas ke Firestore.</p>
+  <button id="btn" onclick="runSeed()">▶ Mulai Seed</button>
+  <div id="log">Menunggu...</div>
+
+  <!-- Firebase SDK v10 (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey:            "AIzaSyDMS6rS326mKVIxJsxBdJdk2TyX_OFoa0s",
+      authDomain:        "tixioapp-b5073.firebaseapp.com",
+      projectId:         "tixioapp-b5073",
+      storageBucket:     "tixioapp-b5073.firebasestorage.app",
+      messagingSenderId: "441126540998",
+      appId:             "1:441126540998:web:3aa85d8c0547b0300d29c7",
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // ── DATA ────────────────────────────────────────────────────────────────────
+
+    const FOOD_ITEMS = [
+      { id:'rec_001', name:'Paket Hemat Spesial',          category:'recommended',     price:85000,  imagePath:'assets/images/Combo_1.png',                           description:'Popcorn medium + 2 minuman' },
+      { id:'exc_001', name:'Online Exclusive Combo Sweet',  category:'exclusive_combo', price:104000, imagePath:'assets/images/online_exclusive combo _sweeet.png',    description:'Popcorn large + 2 Coca-Cola + Pocky + Nugget' },
+      { id:'exc_002', name:'Online Exclusive Combo Savory', category:'exclusive_combo', price:99000,  imagePath:'assets/images/combo_savory.png',                      description:'Popcorn large + 2 Coca-Cola + Chicken Strip' },
+      { id:'exc_003', name:'Online Exclusive Combo Duo',    category:'exclusive_combo', price:119000, imagePath:'assets/images/online_exclusive_combo_2.png',          description:'Popcorn XL + 2 Coca-Cola + Snack pilihan' },
+      { id:'cmb_001', name:'Combo 1 - Popcorn + Minuman',          category:'combo', price:65000,  imagePath:'assets/images/Combo1_Popcorn_ Minuman.png',           description:'' },
+      { id:'cmb_002', name:'Combo 2 - Popcorn Besar + 2 Minuman',  category:'combo', price:79000,  imagePath:'assets/images/Combo_2_Popcorn_Besar_2_Minuman.png',  description:'' },
+      { id:'cmb_003', name:'Combo 3 - Family Pack',                 category:'combo', price:145000, imagePath:'assets/images/Combo 3_Family_Pack.png',              description:'' },
+      { id:'snk_001', name:'Popcorn Small',  category:'snack', price:32000, imagePath:'assets/images/Popcorn_Small.png',    description:'' },
+      { id:'snk_002', name:'Popcorn Medium', category:'snack', price:42000, imagePath:'assets/images/Popcorn_Medium.png',   description:'' },
+      { id:'snk_003', name:'Popcorn Large',  category:'snack', price:55000, imagePath:'assets/images/Popcorn_Large.png',   description:'' },
+      { id:'snk_004', name:'Nachos + Cheese',category:'snack', price:38000, imagePath:'assets/images/Nachos_+_Cheese.png', description:'' },
+      { id:'snk_005', name:'Hot Dog',        category:'snack', price:35000, imagePath:'assets/images/HotDog.png',          description:'' },
+      { id:'drk_001', name:'Coca-Cola Regular', category:'drink', price:22000, imagePath:'assets/images/Coca-Cola_Regular.png', description:'' },
+      { id:'drk_002', name:'Coca-Cola Large',   category:'drink', price:28000, imagePath:'assets/images/Coca-Cola_Large.png',   description:'' },
+      { id:'drk_003', name:'Air Mineral',       category:'drink', price:15000, imagePath:'assets/images/Air_Mineral.png',       description:'' },
+      { id:'drk_004', name:'Juice Jeruk',       category:'drink', price:30000, imagePath:'assets/images/Juice_Jeruk.png',       description:'' },
+    ];
+
+    const CINEMAS = {
+      Jakarta: [
+        { cinemaName:'Grand Indonesia', screenType:'REGULAR 2D', price:60000,  times:['12:00','14:30','17:00','19:30'] },
+        { cinemaName:'Senayan City',    screenType:'IMAX 2D',    price:85000,  times:['13:00','16:00','19:00'] },
+        { cinemaName:'Kelapa Gading',   screenType:'VIP 2D',     price:120000, times:['14:00','18:00','20:30'] },
+      ],
+      Bandung: [
+        { cinemaName:'Ciwalk',             screenType:'REGULAR 2D', price:45000, times:['12:30','15:00','18:00','20:30'] },
+        { cinemaName:'Paris Van Java',     screenType:'REGULAR 2D', price:50000, times:['13:15','16:15','19:15'] },
+        { cinemaName:'Trans Studio Mall',  screenType:'MACRO XE',   price:65000, times:['14:00','17:30'] },
+      ],
+      Bali: [
+        { cinemaName:'Beachwalk', screenType:'REGULAR 2D', price:60000, times:['13:00','16:00','19:00'] },
+        { cinemaName:'Level 21',  screenType:'REGULAR 2D', price:55000, times:['12:30','15:30','18:30'] },
+      ],
+      Balikpapan: [
+        { cinemaName:'Pentacity', screenType:'REGULAR 2D', price:50000, times:['12:00','14:30','17:00'] },
+        { cinemaName:'E-Walk',    screenType:'REGULAR 2D', price:45000, times:['13:00','15:30','18:00'] },
+      ],
+      Batam: [
+        { cinemaName:'Mega Mall',       screenType:'REGULAR 2D', price:40000, times:['12:15','15:15','18:15'] },
+        { cinemaName:'Grand Batam Mall',screenType:'REGULAR 2D', price:45000, times:['13:30','16:30','19:30'] },
+      ],
+      Bekasi: [
+        { cinemaName:'Summarecon Mall', screenType:'IMAX 2D',    price:65000, times:['12:00','15:00','18:00'] },
+        { cinemaName:'Mega Bekasi',     screenType:'REGULAR 2D', price:40000, times:['13:00','15:30','18:30'] },
+      ],
+      Bogor: [
+        { cinemaName:'Botani Square',   screenType:'REGULAR 2D', price:45000, times:['12:45','15:45','18:45'] },
+        { cinemaName:'Cibinong City',   screenType:'REGULAR 2D', price:40000, times:['13:15','16:15','19:15'] },
+      ],
+      Makassar: [
+        { cinemaName:'Trans Studio Mall', screenType:'REGULAR 2D', price:50000, times:['12:00','14:30','17:00'] },
+        { cinemaName:'Panakkukang',       screenType:'REGULAR 2D', price:45000, times:['13:00','15:30','18:00'] },
+      ],
+      Palembang: [
+        { cinemaName:'Palembang Icon',   screenType:'REGULAR 2D', price:45000, times:['12:30','15:00','17:30'] },
+        { cinemaName:'Palembang Square', screenType:'REGULAR 2D', price:40000, times:['13:00','15:30','18:00'] },
+      ],
+      Medan: [
+        { cinemaName:'Plaza Medan Fair',    screenType:'REGULAR 2D', price:44000, times:['12:00','13:25','14:25','16:50','19:15','21:40'] },
+        { cinemaName:'Lippo Plaza Medan',   screenType:'REGULAR 2D', price:37000, times:['12:00','14:20','16:40','19:00'] },
+        { cinemaName:'Sun Plaza',           screenType:'IMAX 2D',    price:65000, times:['13:00','16:00','20:00'] },
+        { cinemaName:'Hermes Place',        screenType:'REGULAR 2D', price:35000, times:['13:30','16:00','18:30'] },
+      ],
+    };
+
+    // ── SEED ────────────────────────────────────────────────────────────────────
+
+    function log(msg, cls) {
+      const el = document.getElementById('log');
+      el.innerHTML += `<span class="${cls||''}">${msg}\n</span>`;
+    }
+
+    async function runSeed() {
+      const btn = document.getElementById('btn');
+      btn.disabled = true;
+      document.getElementById('log').innerHTML = '';
+      log('🚀 Memulai seed...');
+
+      try {
+        // ── Food Items ──
+        log('\n📦 Menyimpan food_items...');
+        const batch1 = db.batch();
+        for (const item of FOOD_ITEMS) {
+          const ref = db.collection('food_items').doc(item.id);
+          batch1.set(ref, item);
+        }
+        await batch1.commit();
+        log(`✅ food_items: ${FOOD_ITEMS.length} dokumen berhasil`, 'ok');
+
+        // ── Cinemas ──
+        log('\n🎬 Menyimpan cinemas...');
+        let cinemaCount = 0;
+        for (const [city, schedules] of Object.entries(CINEMAS)) {
+          const batch2 = db.batch();
+          for (let i = 0; i < schedules.length; i++) {
+            const ref = db.collection('cinemas').doc(`${city}_${i}`);
+            batch2.set(ref, { city, ...schedules[i] });
+            cinemaCount++;
+          }
+          await batch2.commit();
+          log(`  ✔ ${city}: ${schedules.length} jadwal`, 'ok');
+        }
+        log(`\n✅ cinemas: ${cinemaCount} dokumen berhasil`, 'ok');
+
+        log('\n🎉 SELESAI! Buka Firebase Console untuk memverifikasi.', 'ok');
+      } catch (e) {
+        log(`\n❌ Error: ${e.message}`, 'err');
+        log('Pastikan Firestore sudah aktif dan rules mengizinkan write (test mode).', 'err');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -2,8 +2,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:project_uts_apk/data/data_food_and_beverage.dart';
 import 'package:project_uts_apk/models/food_model.dart';
+import 'package:project_uts_apk/providers/food_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:project_uts_apk/screens/payments/payment_screen.dart';
 import 'package:project_uts_apk/widgets/qty_control.dart';
 import 'package:project_uts_apk/widgets/time_banner.dart';
@@ -33,26 +34,29 @@ class FoodBeveragesScreen extends StatefulWidget {
 }
 
 class _FoodBeveragesScreenState extends State<FoodBeveragesScreen> {
-  // Cart: id -> qty
   final Map<String, int> _cart = {};
+  List<FoodItem> _foodItems = [];
 
-  // Countdown timer (5 menit)
   static const int _totalSeconds = 5 * 60;
   int _remainingSeconds = _totalSeconds;
   Timer? _timer;
 
-  // Recommended item (item pertama di cart, atau default)
   String? _recommendedId;
 
   @override
   void initState() {
     super.initState();
     _startTimer();
-    // Default recommended item
-    final recs = allFoodItems
-        .where((f) => f.category == 'recommended')
-        .toList();
-    if (recs.isNotEmpty) _recommendedId = recs.first.id;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _foodItems = Provider.of<FoodProvider>(context).foodItems;
+    if (_recommendedId == null && _foodItems.isNotEmpty) {
+      final recs = _foodItems.where((f) => f.category == 'recommended').toList();
+      if (recs.isNotEmpty) _recommendedId = recs.first.id;
+    }
   }
 
   @override
@@ -100,9 +104,9 @@ class _FoodBeveragesScreenState extends State<FoodBeveragesScreen> {
   int get _totalFoodPrice {
     int total = 0;
     _cart.forEach((id, qty) {
-      final item = allFoodItems.firstWhere(
+      final item = _foodItems.firstWhere(
         (f) => f.id == id,
-        orElse: () => FoodItem(id: '', name: '', category: '', price: 0),
+        orElse: () => const FoodItem(id: '', name: '', category: '', price: 0),
       );
       total += item.price * qty;
     });
@@ -137,27 +141,20 @@ class _FoodBeveragesScreenState extends State<FoodBeveragesScreen> {
     final String title = (movie.title ?? '') as String;
     final String imagePath = (movie.imagePath ?? '') as String;
 
-    // Kelompokkan item per kategori
-    final exclusiveCombos = allFoodItems
-        .where((f) => f.category == 'exclusive_combo')
-        .toList();
-    final combos = allFoodItems.where((f) => f.category == 'combo').toList();
-    final snacks = allFoodItems.where((f) => f.category == 'snack').toList();
-    final drinks = allFoodItems.where((f) => f.category == 'drink').toList();
+    final exclusiveCombos = _foodItems.where((f) => f.category == 'exclusive_combo').toList();
+    final combos = _foodItems.where((f) => f.category == 'combo').toList();
+    final snacks = _foodItems.where((f) => f.category == 'snack').toList();
+    final drinks = _foodItems.where((f) => f.category == 'drink').toList();
 
-    // Recommended item (tampilkan jika ada item di cart ATAU default pertama)
     FoodItem? recommendedItem;
     if (_hasItemInCart) {
-      // Tampilkan item pertama di cart sebagai recommended
       final firstCartId = _cart.keys.first;
       try {
-        recommendedItem = allFoodItems.firstWhere((f) => f.id == firstCartId);
+        recommendedItem = _foodItems.firstWhere((f) => f.id == firstCartId);
       } catch (_) {}
     } else if (_recommendedId != null) {
       try {
-        recommendedItem = allFoodItems.firstWhere(
-          (f) => f.id == _recommendedId,
-        );
+        recommendedItem = _foodItems.firstWhere((f) => f.id == _recommendedId);
       } catch (_) {}
     }
 
@@ -418,7 +415,7 @@ class _FoodBeveragesScreenState extends State<FoodBeveragesScreen> {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -539,7 +536,7 @@ class _FoodBeveragesScreenState extends State<FoodBeveragesScreen> {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -648,7 +645,7 @@ class _FoodBeveragesScreenState extends State<FoodBeveragesScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, -4),
           ),
@@ -758,7 +755,7 @@ class _FoodBeveragesScreenState extends State<FoodBeveragesScreen> {
   void _goToPayment() {
     _timer?.cancel();
     final foodOrder = _cart.entries.where((e) => e.value > 0).map((e) {
-      final item = allFoodItems.firstWhere((f) => f.id == e.key);
+      final item = _foodItems.firstWhere((f) => f.id == e.key);
       return {'name': item.name, 'qty': e.value, 'price': item.price};
     }).toList();
 
@@ -819,5 +816,3 @@ class _FoodBeveragesScreenState extends State<FoodBeveragesScreen> {
   }
 }
 
-// TAMBAHKAN DI PALING BAWAH FILE seat_selection_screen.dart
-List<FoodItem> get globalFoodItems => allFoodItems;

@@ -5,12 +5,15 @@ class SummaryRow extends StatelessWidget {
   final String value;
   final bool isGrey;
   final bool isBold;
+  final Color? valueColor;
+
   const SummaryRow({
     super.key,
     required this.label,
     required this.value,
     this.isGrey = true,
     this.isBold = false,
+    this.valueColor,
   });
 
   @override
@@ -32,7 +35,7 @@ class SummaryRow extends StatelessWidget {
             style: TextStyle(
               fontSize: isBold ? 15 : 13,
               fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              color: isBold ? const Color(0xFF1A237E) : Colors.black87,
+              color: valueColor ?? (isBold ? const Color(0xFF1A237E) : Colors.black87),
             ),
           ),
         ],

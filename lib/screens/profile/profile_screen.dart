@@ -1,6 +1,8 @@
 // PROFILE SCREEN - halaman penuh dengan Scaffold sendiri
+import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:project_uts_apk/data/data_film.dart';
+import 'package:project_uts_apk/providers/auth_provider.dart';
 import 'package:project_uts_apk/screens/login/login_screen.dart';
 import 'package:project_uts_apk/screens/payments/payment_process_screen.dart';
 import 'package:project_uts_apk/widgets/menu.dart';
@@ -32,7 +34,7 @@ class ProfileScreen extends StatelessWidget {
 
 class _ProfileBody extends StatelessWidget {
   void _showEditProfile(BuildContext context) {
-    final nameCtrl = TextEditingController(text: authState.username);
+    final nameCtrl = TextEditingController(text: authState.username ?? '');
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -110,19 +112,40 @@ class _ProfileBody extends StatelessWidget {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: () {
-                  if (nameCtrl.text.trim().isNotEmpty) {
-                    authState.login(
-                      nameCtrl.text.trim(),
-                      authState.email ?? '',
-                    );
+                onPressed: () async {
+                  final newName = nameCtrl.text.trim();
+                  if (newName.isNotEmpty) {
+                    try {
+                      // Panggil fungsi updateProfileName dari Provider
+                      await context.read<AuthState>().updateProfileName(
+                        newName,
+                      );
+
+                      if (context.mounted) {
+                        Navigator.pop(context); // Tutup bottom sheet
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Profil berhasil diperbarui!'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(e.toString()),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
                   }
-                  Navigator.pop(ctx);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1A237E),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child: const Text(
@@ -329,7 +352,7 @@ class _ProfileBody extends StatelessWidget {
                                 border: Border.all(color: Colors.grey.shade200),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.04),
+                                    color: Colors.black.withValues(alpha: 0.04),
                                     blurRadius: 6,
                                     offset: const Offset(0, 2),
                                   ),
@@ -358,7 +381,7 @@ class _ProfileBody extends StatelessWidget {
                                           vertical: 4,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: Colors.green.withOpacity(0.12),
+                                          color: Colors.green.withValues(alpha: 0.12),
                                           borderRadius: BorderRadius.circular(
                                             20,
                                           ),
@@ -421,125 +444,6 @@ class _ProfileBody extends StatelessWidget {
               ],
             );
           },
-        ),
-      ),
-    );
-  }
-
-  void _showFilmFavorit(BuildContext context) {
-    final favorit = [];
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.65,
-        maxChildSize: 0.92,
-        minChildSize: 0.4,
-        expand: false,
-        builder: (_, scrollCtrl) => Column(
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Film Favorit',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1A237E),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: ListView.separated(
-                controller: scrollCtrl,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: favorit.length,
-                separatorBuilder: (_, _) => const Divider(height: 1),
-                itemBuilder: (_, i) {
-                  final film = favorit[i];
-                  return ListTile(
-                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                    leading: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.asset(
-                        film['imagePath']!,
-                        width: 50,
-                        height: 70,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => Container(
-                          width: 50,
-                          height: 70,
-                          color: const Color(0xFF1A237E).withOpacity(0.1),
-                          child: const Icon(
-                            Icons.movie_outlined,
-                            color: Color(0xFF1A237E),
-                          ),
-                        ),
-                      ),
-                    ),
-                    title: Text(
-                      film['title']!,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 4),
-                        Text(
-                          film['genre']!,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.star_rounded,
-                              size: 14,
-                              color: Colors.amber,
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              film['rating']!,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    trailing: IconButton(
-                      icon: const Icon(
-                        Icons.favorite_rounded,
-                        color: Colors.pink,
-                      ),
-                      onPressed: () {},
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
         ),
       ),
     );
@@ -751,10 +655,13 @@ class _ProfileBody extends StatelessWidget {
             child: const Text('Batal'),
           ),
           ElevatedButton(
-            onPressed: () {
-              authState.logout();
-              Navigator.pop(ctx); // tutup dialog
-              Navigator.pop(context); // kembali ke Home
+            onPressed: () async {
+              Navigator.pop(ctx); // tutup dialog dulu
+              await authState.logout();
+              // Pop ProfileScreen jika dibuka sebagai route terpisah
+              if (context.mounted && Navigator.canPop(context)) {
+                Navigator.pop(context);
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -807,7 +714,7 @@ class _ProfileBody extends StatelessWidget {
                     const SizedBox(height: 40),
                     CircleAvatar(
                       radius: 44,
-                      backgroundColor: Colors.white.withOpacity(0.2),
+                      backgroundColor: Colors.white.withValues(alpha: 0.2),
                       child: Text(
                         initial,
                         style: const TextStyle(
@@ -866,13 +773,6 @@ class _ProfileBody extends StatelessWidget {
                       iconColor: Colors.orange,
                       label: 'Riwayat Pembelian',
                       onTap: () => _showRiwayatPembelian(context),
-                    ),
-                    _Divider(),
-                    _MenuItem(
-                      icon: Icons.favorite_border_rounded,
-                      iconColor: Colors.pink,
-                      label: 'Film Favorit',
-                      onTap: () => _showFilmFavorit(context),
                     ),
                   ],
                 ),
@@ -998,7 +898,7 @@ class _MenuItem extends StatelessWidget {
       width: 36,
       height: 36,
       decoration: BoxDecoration(
-        color: iconColor.withOpacity(0.12),
+        color: iconColor.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Icon(icon, color: iconColor, size: 20),
@@ -1030,7 +930,7 @@ class ProfilePage extends StatelessWidget {
                   height: 90,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFF1A237E).withOpacity(0.1),
+                    color: const Color(0xFF1A237E).withValues(alpha: 0.1),
                   ),
                   child: const Icon(
                     Icons.person_outline_rounded,
@@ -1133,7 +1033,7 @@ class _CSOption extends StatelessWidget {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: color, size: 22),

@@ -1,6 +1,9 @@
-// LOGIN SCREEN
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:project_uts_apk/data/data_film.dart';
+import 'package:flutter/foundation.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:project_uts_apk/providers/auth_provider.dart';
 import 'package:project_uts_apk/widgets/input_field.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -16,11 +19,25 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscure = true;
   bool _isRegister = false;
   String? _error;
+  bool _isLoading = false;
 
-  void _submit() {
+  Future<void> _signInWithGoogle() async {
+    setState(() { _isLoading = true; _error = null; });
+    try {
+      await context.read<AuthState>().signInWithGoogle();
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      setState(() => _error = 'Login Google gagal: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _submit() async {
     final email = _emailCtrl.text.trim();
     final pass = _passCtrl.text.trim();
     final name = _nameCtrl.text.trim();
+
     if (email.isEmpty || pass.isEmpty || (_isRegister && name.isEmpty)) {
       setState(() => _error = 'Semua field harus diisi!');
       return;
@@ -29,9 +46,46 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _error = 'Password minimal 6 karakter');
       return;
     }
-    final displayName = _isRegister ? name : email.split('@').first;
-    authState.login(displayName, email);
-    Navigator.pop(context);
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      if (_isRegister) {
+        // --- JIKA MODE DAFTAR ---
+        await context.read<AuthState>().registerWithEmail(name, email, pass);
+
+        if (mounted) {
+          // Munculkan notifikasi sukses
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Akun berhasil dibuat! Silakan masuk.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Geser UI kembali ke mode Login dan hapus isi password
+          setState(() {
+            _isRegister = false;
+            _passCtrl.clear();
+          });
+        }
+      } else {
+        // --- JIKA MODE LOGIN ---
+        await context.read<AuthState>().loginWithEmail(email, pass);
+        // Baru tutup halaman setelah berhasil login
+        if (mounted) Navigator.pop(context);
+      }
+    } on FirebaseAuthException catch (e) {
+      setState(
+        () => _error = e.message ?? 'Login gagal, periksa kredensial Anda.',
+      );
+    } catch (e) {
+      setState(() => _error = 'Terjadi kesalahan: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -159,24 +213,78 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: double.infinity,
                       height: 52,
                       child: ElevatedButton(
-                        onPressed: _submit,
+                        onPressed: _isLoading ? null : _submit,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF1A237E),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: Text(
-                          _isRegister ? 'Daftar Sekarang' : 'Masuk',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                _isRegister ? 'Daftar Sekarang' : 'Masuk',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 20),
+                    // ── Tombol Google (Android/iOS only) ─────────────────
+                    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) ...[
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(child: Divider(color: Colors.grey.shade300)),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 12),
+                            child: Text('atau', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                          ),
+                          Expanded(child: Divider(color: Colors.grey.shade300)),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: OutlinedButton.icon(
+                          onPressed: _isLoading ? null : _signInWithGoogle,
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: Colors.grey.shade300),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          icon: Image.network(
+                            'https://www.google.com/favicon.ico',
+                            width: 22,
+                            height: 22,
+                            errorBuilder: (_, _, _) =>
+                                const Icon(Icons.g_mobiledata, size: 22, color: Colors.red),
+                          ),
+                          label: const Text(
+                            'Lanjutkan dengan Google',
+                            style: TextStyle(
+                              color: Colors.black87,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ] else
+                      const SizedBox(height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
