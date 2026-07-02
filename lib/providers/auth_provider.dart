@@ -1,104 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import '../services/preferences_service.dart';
 
+// AUTH STATE
 class AuthState extends ChangeNotifier {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final PreferencesService _prefs = PreferencesService();
+  String? _username;
+  String? _email;
+  String? get username => _username;
+  String? get email => _email;
+  bool get isLoggedIn => _username != null;
 
-  User? _user;
-  String? _localUsername;
-
-  bool get isLoggedIn => _user != null;
-  String? get email => _user?.email;
-
-  // Ganti Object? menjadi String?
-  String? get username {
-    if (!isLoggedIn) return 'Users'; // Langsung kembalikan teks murninya
-
-    return _user?.displayName ??
-        _localUsername ??
-        _user?.email?.split('@').first;
+  void login(String username, String email) {
+    _username = username;
+    _email = email;
+    notifyListeners();
   }
 
-  AuthState() {
-    _initSession();
-  }
-
-  Future<void> _initSession() async {
-    _localUsername = await _prefs.getUserName();
-    _auth.authStateChanges().listen((User? user) {
-      _user = user;
-      notifyListeners();
-    });
-  }
-
-  Future<void> registerWithEmail(
-    String name,
-    String email,
-    String password,
-  ) async {
-    UserCredential credential = await _auth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-    // Simpan nama ke profil Firebase
-    await credential.user?.updateDisplayName(name);
-
-    // TRIKNYA DI SINI: Langsung paksa logout setelah akun berhasil dibuat!
-    await _auth.signOut();
-
-    // Hapus kode notifyListeners() dan saveUserName() yang lama di sini
-    // karena user belum resmi "login".
-  }
-
-  Future<void> loginWithEmail(String email, String password) async {
-    final credential = await _auth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-    if (credential.user?.displayName != null) {
-      await _prefs.saveUserName(credential.user!.displayName!);
-    }
-  }
-
-  Future<void> updateProfileName(String newName) async {
-    try {
-      if (_user != null) {
-        await _user!.updateDisplayName(newName);
-        await _user!.reload();
-        _user = _auth.currentUser;
-      }
-      await _prefs.saveUserName(newName);
-      _localUsername = newName;
-      notifyListeners();
-    } catch (e) {
-      throw Exception('Gagal update nama: $e');
-    }
-  }
-
-  Future<void> signInWithGoogle() async {
-    final googleUser = await GoogleSignIn().signIn();
-    if (googleUser == null) return; // user cancel
-
-    final googleAuth = await googleUser.authentication;
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-
-    final result = await _auth.signInWithCredential(credential);
-    final name = result.user?.displayName;
-    if (name != null) {
-      await _prefs.saveUserName(name);
-      _localUsername = name;
-    }
-  }
-
-  Future<void> logout() async {
-    try { await GoogleSignIn().signOut(); } catch (_) {}
-    await _prefs.clearSession();
-    await _auth.signOut();
+  void logout() {
+    _username = null;
+    _email = null;
+    notifyListeners();
   }
 }

@@ -1,57 +1,21 @@
 // HOME CONTENT
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:project_uts_apk/data/data_film.dart';
-import 'package:project_uts_apk/screens/country/city_selection_screen.dart';
-import 'package:project_uts_apk/screens/login/login_screen.dart';
-import 'package:project_uts_apk/screens/notification/notification_screen.dart';
-import 'package:project_uts_apk/screens/profile/profile_screen.dart';
-import 'package:project_uts_apk/screens/movie/watchlist_screen.dart';
-import 'package:project_uts_apk/widgets/movie_card.dart';
-import 'package:project_uts_apk/widgets/section_header.dart';
-import 'package:project_uts_apk/providers/movie_provider.dart';
-import 'package:project_uts_apk/services/seed_service.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_application_for_us/data/data_film.dart';
+import 'package:flutter_application_for_us/screens/country/city_selection_screen.dart';
+import 'package:flutter_application_for_us/screens/login/login_screen.dart';
+import 'package:flutter_application_for_us/screens/notification/notification_screen.dart';
+import 'package:flutter_application_for_us/screens/payments/payment_process_screen.dart';
+import 'package:flutter_application_for_us/screens/profile/profile_screen.dart';
+import 'package:flutter_application_for_us/widgets/movie_card.dart';
+import 'package:flutter_application_for_us/widgets/section_header.dart';
+
 import '../movie/movie_detail_screen.dart';
 import '../../widgets/upcoming_card.dart';
 
-class HomeContent extends StatefulWidget {
+class HomeContent extends StatelessWidget {
   final VoidCallback onSeeAllTap;
+
   const HomeContent({super.key, required this.onSeeAllTap});
-
-  @override
-  State<HomeContent> createState() => _HomeContentState();
-}
-
-class _HomeContentState extends State<HomeContent> {
-  late final PageController _sponsorCtrl;
-  Timer? _sponsorTimer;
-  int _sponsorPage = 0;
-
-  static const _sponsors = ['assets/images/sponsor1.png', 'assets/images/sponsor2.png'];
-
-  @override
-  void initState() {
-    super.initState();
-    _sponsorCtrl = PageController();
-    _sponsorTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-      _sponsorPage = (_sponsorPage + 1) % _sponsors.length;
-      if (_sponsorCtrl.hasClients) {
-        _sponsorCtrl.animateToPage(
-          _sponsorPage,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeInOut,
-        );
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _sponsorTimer?.cancel();
-    _sponsorCtrl.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -121,37 +85,9 @@ class _HomeContentState extends State<HomeContent> {
                     ),
                     Row(
                       children: [
-                        AnimatedBuilder(
-                          animation: watchlistState,
-                          builder: (context, _) {
-                            final count = watchlistState.unreadCount;
-                            return Stack(
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.favorite_border_rounded),
-                                  onPressed: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (_) => const WatchlistScreen()),
-                                  ),
-                                ),
-                                if (count > 0)
-                                  Positioned(
-                                    right: 8, top: 8,
-                                    child: Container(
-                                      width: 16, height: 16,
-                                      decoration: const BoxDecoration(
-                                        color: Colors.red,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Center(
-                                        child: Text('$count',
-                                          style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            );
-                          },
+                        IconButton(
+                          icon: const Icon(Icons.favorite_border_rounded),
+                          onPressed: () {},
                         ),
                         AnimatedBuilder(
                           animation: bookingState,
@@ -350,9 +286,9 @@ class _HomeContentState extends State<HomeContent> {
                                         builder: (_) => const LoginScreen(),
                                       ),
                                     );
-                                    return;
+                                  } else {
+                                    // Logic buat beli tiket banner (misal ke halaman film tersebut)
                                   }
-                                  widget.onSeeAllTap(); // pindah ke tab Movie
                                 },
                                 child: const Text('Pesan Tiket'),
                               ),
@@ -365,123 +301,53 @@ class _HomeContentState extends State<HomeContent> {
                 ),
               ),
               const SizedBox(height: 24),
-              SectionHeader(title: 'Sedang Tayang', onSeeAll: widget.onSeeAllTap),
+              SectionHeader(title: 'Sedang Tayang', onSeeAll: onSeeAllTap),
               const SizedBox(height: 12),
-              Consumer<MovieProvider>(
-                builder: (context, movieProvider, child) {
-                  // 1. Tampilan saat API lagi ditarik (Loading)
-                  if (movieProvider.isLoading) {
-                    return const SizedBox(
-                      height: 260,
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFF1A237E),
-                        ),
-                      ),
-                    );
-                  }
-
-                  // 2. Tampilan kalau offline dan database HP kosong
-                  if (movieProvider.errorMessage.isNotEmpty &&
-                      movieProvider.movies.isEmpty) {
-                    return SizedBox(
-                      height: 260,
-                      child: Center(
-                        child: Text(
-                          movieProvider.errorMessage,
-                          style: const TextStyle(color: Colors.red),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    );
-                  }
-
-                  // 3. Tampilan Sukses (Data berhasil ditarik)
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Indikator kecil kalau lagi pakai mode offline
-                      if (movieProvider.isOffline)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16.0,
-                            vertical: 4.0,
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.wifi_off,
-                                size: 14,
-                                color: Colors.orange,
+              SizedBox(
+                height: 260,
+                child: PageView.builder(
+                  controller: PageController(
+                    viewportFraction: 0.35,
+                    initialPage: 1,
+                  ),
+                  itemCount: nowShowingMovies.length,
+                  itemBuilder: (context, index) {
+                    return GestureDetector(
+                      onTap: () {
+                        // 1. Cek dulu status loginnya
+                        if (authState.isLoggedIn) {
+                          // 2. Kalau sudah login, arahkan ke Detail Film
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => MovieDetailScreen(
+                                movie: nowShowingMovies[index],
                               ),
-                              SizedBox(width: 4),
-                              Text(
-                                ' Mode Offline',
-                                style: TextStyle(
-                                  color: Colors.orange,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            ),
+                          );
+                        } else {
+                          // 3. Kalau belum login, paksa ke halaman Login
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const LoginScreen(),
+                            ),
+                          );
+
+                          // Opsional: Kasih pesan biar user gak bingung
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                "Login dulu yuk buat liat detail filmnya!",
                               ),
-                            ],
-                          ),
-                        ),
-
-                      SizedBox(
-                        height: 260,
-                        child: PageView.builder(
-                          controller: PageController(
-                            viewportFraction: 0.35,
-                            initialPage: 1,
-                          ),
-                          // GANTI 1: Pakai length dari API
-                          itemCount: movieProvider.movies.length,
-                          itemBuilder: (context, index) {
-                            // GANTI 2: Ambil data spesifik dari index API
-                            final movie = movieProvider.movies[index];
-
-                            return GestureDetector(
-                              onTap: () {
-                                // 1. Cek dulu status loginnya
-                                if (authState.isLoggedIn) {
-                                  // 2. Kalau sudah login, arahkan ke Detail Film
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => MovieDetailScreen(
-                                        movie:
-                                            movie, // GANTI 3: Lempar data API ke Detail
-                                      ),
-                                    ),
-                                  );
-                                } else {
-                                  // 3. Kalau belum login, paksa ke halaman Login
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => const LoginScreen(),
-                                    ),
-                                  );
-
-                                  // Kasih pesan biar user gak bingung
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        "Login dulu yuk buat liat detail filmnya!",
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
-                              // GANTI 4: Masukkan data API ke widget card lu
-                              child: AnimatedMovieCard(movie: movie),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  );
-                },
+                            ),
+                          );
+                        }
+                      },
+                      child: AnimatedMovieCard(movie: nowShowingMovies[index]),
+                    );
+                  },
+                ),
               ),
               const SizedBox(height: 24),
               SectionHeader(title: 'Segera Hadir', onSeeAll: () {}),
@@ -491,70 +357,9 @@ class _HomeContentState extends State<HomeContent> {
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: SeedService.upcomingMovies.length,
+                  itemCount: upcomingMovies.length,
                   itemBuilder: (context, index) =>
-                      UpcomingCard(movie: SeedService.upcomingMovies[index]),
-                ),
-              ),
-              const SizedBox(height: 24),
-              // ── Banner Sponsor ──────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Promo & Sponsor',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      height: 130,
-                      child: PageView.builder(
-                        controller: _sponsorCtrl,
-                        itemCount: _sponsors.length,
-                        onPageChanged: (i) => _sponsorPage = i,
-                        itemBuilder: (context, index) => Padding(
-                          padding: const EdgeInsets.only(right: 12),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
-                            child: Image.asset(
-                              _sponsors[index],
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              errorBuilder: (ctx, e, s) => Container(
-                                color: const Color(0xFF1A237E).withValues(alpha: 0.1),
-                                child: const Center(child: Icon(Icons.image_outlined, color: Colors.grey, size: 40)),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    // Dot indicator
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(_sponsors.length, (i) {
-                        return AnimatedBuilder(
-                          animation: _sponsorCtrl,
-                          builder: (context, _) {
-                            final active = _sponsorCtrl.hasClients
-                                ? (_sponsorCtrl.page?.round() ?? 0) == i
-                                : i == 0;
-                            return AnimatedContainer(
-                              duration: const Duration(milliseconds: 250),
-                              margin: const EdgeInsets.symmetric(horizontal: 3),
-                              width: active ? 20 : 7,
-                              height: 7,
-                              decoration: BoxDecoration(
-                                color: active ? const Color(0xFF1A237E) : Colors.grey.shade300,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            );
-                          },
-                        );
-                      }),
-                    ),
-                  ],
+                      UpcomingCard(movie: upcomingMovies[index]),
                 ),
               ),
               const SizedBox(height: 24),

@@ -1,7 +1,6 @@
 // UPCOMING CARD
 import 'package:flutter/material.dart';
-import 'package:project_uts_apk/models/movie_models.dart';
-import 'package:project_uts_apk/widgets/app_image.dart';
+import 'package:flutter_application_for_us/models/movie_models.dart';
 
 class UpcomingCard extends StatelessWidget {
   final MovieModel movie;
@@ -14,12 +13,40 @@ class UpcomingCard extends StatelessWidget {
       margin: const EdgeInsets.only(right: 14),
       child: Stack(
         children: [
-          AppImage(
-            path: movie.imagePath,
-            width: 180,
-            height: 190,
-            fit: BoxFit.cover,
+          ClipRRect(
             borderRadius: BorderRadius.circular(14),
+            child: Image.asset(
+              movie.imagePath,
+              width: 180,
+              height: 190,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => Container(
+                width: 180,
+                height: 190,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.add_photo_alternate_outlined,
+                      size: 36,
+                      color: Colors.grey.shade400,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Tambah Poster',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
           Positioned.fill(
             child: ClipRRect(
@@ -31,7 +58,7 @@ class UpcomingCard extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withValues(alpha: 0.75),
+                      Colors.black.withOpacity(0.75),
                     ],
                     stops: const [0.4, 1.0],
                   ),
