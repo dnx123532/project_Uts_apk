@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tixio – Seed Firestore</title>
+  <style>
+    body { font-family: sans-serif; max-width: 640px; margin: 40px auto; padding: 0 16px; }
+    h2  { color: #1A237E; }
+    button { background: #1A237E; color: #fff; border: none; padding: 12px 28px;
+             font-size: 16px; border-radius: 8px; cursor: pointer; margin-top: 16px; }
+    button:disabled { background: #9e9e9e; cursor: not-allowed; }
+    #log { background: #f5f5f5; border-radius: 8px; padding: 16px; margin-top: 24px;
+           min-height: 80px; white-space: pre-wrap; font-size: 13px; font-family: monospace; }
+    .ok  { color: #2e7d32; }
+    .err { color: #c62828; }
+  </style>
+</head>
+<body>
+  <h2>🎬 Tixio – Seed Firestore</h2>
+
+  <!-- ── ADMIN SETUP ── -->
+  <div style="background:#e8eaf6;border-radius:10px;padding:18px;margin-bottom:24px;">
+    <h3 style="margin:0 0 8px;color:#1A237E;">👑 Setup Admin</h3>
+    <p style="margin:0 0 12px;font-size:13px;color:#555;">
+      Masukkan UID akun yang ingin dijadikan admin.<br>
+      Cari di Firebase Console → Authentication → klik akun → salin <strong>User UID</strong>.
+    </p>
+    <input id="uid-input" type="text" placeholder="Contoh: abc123xyz..."
+      style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #9fa8da;
+             border-radius:8px;font-size:14px;margin-bottom:10px;" />
+    <button id="admin-btn" onclick="setAdmin()" style="background:#3949AB;">
+      👑 Set Akun Ini Sebagai Admin
+    </button>
+    <div id="admin-log" style="margin-top:10px;font-size:13px;font-family:monospace;"></div>
+  </div>
+
+  <!-- ── HAPUS MOVIES ── -->
+  <div style="background:#fce4ec;border-radius:10px;padding:18px;margin-bottom:24px;">
+    <h3 style="margin:0 0 8px;color:#c62828;">🗑️ Hapus Semua Film</h3>
+    <p style="margin:0 0 12px;font-size:13px;color:#555;">
+      Hapus semua dokumen di koleksi <code>movies</code> (termasuk data lama dengan path <code>assets/images/</code>).<br>
+      Lakukan ini sebelum seed ulang agar tidak ada duplikat.
+    </p>
+    <button id="del-btn" onclick="deleteAllMovies()" style="background:#c62828;">
+      🗑️ Hapus Semua Film dari Firestore
+    </button>
+    <div id="del-log" style="margin-top:10px;font-size:13px;font-family:monospace;"></div>
+  </div>
+
+  <!-- ── SEED DATA ── -->
+  <p>Klik tombol di bawah untuk mengisi data Food Items dan Cinemas ke Firestore.</p>
+  <button id="btn" onclick="runSeed()">▶ Mulai Seed Data</button>
+  <div id="log">Menunggu...</div>
+
+  <!-- Firebase SDK v10 (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey:            "AIzaSyDMS6rS326mKVIxJsxBdJdk2TyX_OFoa0s",
+      authDomain:        "tixioapp-b5073.firebaseapp.com",
+      projectId:         "tixioapp-b5073",
+      storageBucket:     "tixioapp-b5073.firebasestorage.app",
+      messagingSenderId: "441126540998",
+      appId:             "1:441126540998:web:3aa85d8c0547b0300d29c7",
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // ── DATA ────────────────────────────────────────────────────────────────────
+
+    const FOOD_ITEMS = [
+      { id:'rec_001', name:'Paket Hemat Spesial',          category:'recommended',     price:85000,  imagePath:'https://cdn.jsdelivr.net/gh/dnx123532/video_and_image@main/images/Combo_1.png',                           description:'Popcorn medium + 2 minuman' },
+      { id:'exc_001', name:'Online Exclusive Combo Sweet',  category:'exclusive_combo', price:104000, imagePath:'https://cdn.jsdelivr.net/gh/dnx123532/video_and_image@main/images/online_exclusive combo _sweeet.png',    description:'Popcorn large + 2 Coca-Cola + Pocky + Nugget' },
+      { id:'exc_002', name:'Online Exclusive Combo Savory', category:'exclusive_combo', price:99000,  imagePath:'https://cdn.jsdelivr.net/gh/dnx123532/video_and_image@main/images/combo_savory.png',                      description:'Popcorn large + 2 Coca-Cola + Chicken Strip' },
+      { id:'exc_003', name:'Online Exclusive Combo Duo',    category:'exclusive_combo', price:119000, imagePath:'https://cdn.jsdelivr.net/gh/dnx123532/video_and_image@main/images/online_exclusive_combo_2.png',          description:'Popcorn XL + 2 Coca-Cola + Snack pilihan' },
+      { id:'cmb_001', name:'Combo 1 - Popcorn + Minuman',          category:'combo', price:65000,  imagePath:'https://cdn.jsdelivr.net/gh/dnx123532/video_and_image@main/images/Combo1_Popcorn_ Minuman.png',           description:'' },
+      { id:'cmb_002', name:'Combo 2 - Popcorn Besar + 2 Minuman',  category:'combo', price:79000,  imagePath:'https://cdn.jsdelivr.net/gh/dnx123532/video_and_image@main/images/Combo_2_Popcorn_Besar_2_Minuman.png',  description:'' },
+      { id:'cmb_003', name:'Combo 3 - Family Pack',                 category:'combo', price:145000, imagePath:'https://cdn.jsdelivr.net/gh/dnx123532/video_and_image@main/images/Combo 3_Family_Pack.png',              description:'' },
+      { id:'snk_001', name:'Popcorn Small',  category:'snack', price:32000, imagePath:'https://cdn.jsdelivr.net/gh/dnx123532/video_and_image@main/images/Popcorn_Small.png',    description:'' },
+      { id:'snk_002', name:'Popcorn Medium', category:'snack', price:42000, imagePath:'https://cdn.jsdelivr.net/gh/dnx123532/video_and_image@main/images/Popcorn_Medium.png',   description:'' },
+      { id:'snk_003', name:'Popcorn Large',  category:'snack', price:55000, imagePath:'https://cdn.jsdelivr.net/gh/dnx123532/video_and_image@main/images/Popcorn_Large.png',   description:'' },
+      { id:'snk_004', name:'Nachos + Cheese',category:'snack', price:38000, imagePath:'https://cdn.jsdelivr.net/gh/dnx123532/video_and_image@main/images/Nachos_+_Cheese.png', description:'' },
+      { id:'snk_005', name:'Hot Dog',        category:'snack', price:35000, imagePath:'https://cdn.jsdelivr.net/gh/dnx123532/video_and_image@main/images/HotDog.png',          description:'' },
+      { id:'drk_001', name:'Coca-Cola Regular', category:'drink', price:22000, imagePath:'https://cdn.jsdelivr.net/gh/dnx123532/video_and_image@main/images/Coca-Cola_Regular.png', description:'' },
+      { id:'drk_002', name:'Coca-Cola Large',   category:'drink', price:28000, imagePath:'https://cdn.jsdelivr.net/gh/dnx123532/video_and_image@main/images/Coca-Cola_Large.png',   description:'' },
+      { id:'drk_003', name:'Air Mineral',       category:'drink', price:15000, imagePath:'https://cdn.jsdelivr.net/gh/dnx123532/video_and_image@main/images/Air_Mineral.png',       description:'' },
+      { id:'drk_004', name:'Juice Jeruk',       category:'drink', price:30000, imagePath:'https://cdn.jsdelivr.net/gh/dnx123532/video_and_image@main/images/Juice_Jeruk.png',       description:'' },
+    ];
+
+    const CINEMAS = {
+      Jakarta: [
+        { cinemaName:'Grand Indonesia', screenType:'REGULAR 2D', price:60000,  times:['12:00','14:30','17:00','19:30'] },
+        { cinemaName:'Senayan City',    screenType:'IMAX 2D',    price:85000,  times:['13:00','16:00','19:00'] },
+        { cinemaName:'Kelapa Gading',   screenType:'VIP 2D',     price:120000, times:['14:00','18:00','20:30'] },
+      ],
+      Bandung: [
+        { cinemaName:'Ciwalk',             screenType:'REGULAR 2D', price:45000, times:['12:30','15:00','18:00','20:30'] },
+        { cinemaName:'Paris Van Java',     screenType:'REGULAR 2D', price:50000, times:['13:15','16:15','19:15'] },
+        { cinemaName:'Trans Studio Mall',  screenType:'MACRO XE',   price:65000, times:['14:00','17:30'] },
+      ],
+      Bali: [
+        { cinemaName:'Beachwalk', screenType:'REGULAR 2D', price:60000, times:['13:00','16:00','19:00'] },
+        { cinemaName:'Level 21',  screenType:'REGULAR 2D', price:55000, times:['12:30','15:30','18:30'] },
+      ],
+      Balikpapan: [
+        { cinemaName:'Pentacity', screenType:'REGULAR 2D', price:50000, times:['12:00','14:30','17:00'] },
+        { cinemaName:'E-Walk',    screenType:'REGULAR 2D', price:45000, times:['13:00','15:30','18:00'] },
+      ],
+      Batam: [
+        { cinemaName:'Mega Mall',       screenType:'REGULAR 2D', price:40000, times:['12:15','15:15','18:15'] },
+        { cinemaName:'Grand Batam Mall',screenType:'REGULAR 2D', price:45000, times:['13:30','16:30','19:30'] },
+      ],
+      Bekasi: [
+        { cinemaName:'Summarecon Mall', screenType:'IMAX 2D',    price:65000, times:['12:00','15:00','18:00'] },
+        { cinemaName:'Mega Bekasi',     screenType:'REGULAR 2D', price:40000, times:['13:00','15:30','18:30'] },
+      ],
+      Bogor: [
+        { cinemaName:'Botani Square',   screenType:'REGULAR 2D', price:45000, times:['12:45','15:45','18:45'] },
+        { cinemaName:'Cibinong City',   screenType:'REGULAR 2D', price:40000, times:['13:15','16:15','19:15'] },
+      ],
+      Makassar: [
+        { cinemaName:'Trans Studio Mall', screenType:'REGULAR 2D', price:50000, times:['12:00','14:30','17:00'] },
+        { cinemaName:'Panakkukang',       screenType:'REGULAR 2D', price:45000, times:['13:00','15:30','18:00'] },
+      ],
+      Palembang: [
+        { cinemaName:'Palembang Icon',   screenType:'REGULAR 2D', price:45000, times:['12:30','15:00','17:30'] },
+        { cinemaName:'Palembang Square', screenType:'REGULAR 2D', price:40000, times:['13:00','15:30','18:00'] },
+      ],
+      Medan: [
+        { cinemaName:'Plaza Medan Fair',    screenType:'REGULAR 2D', price:44000, times:['12:00','13:25','14:25','16:50','19:15','21:40'] },
+        { cinemaName:'Lippo Plaza Medan',   screenType:'REGULAR 2D', price:37000, times:['12:00','14:20','16:40','19:00'] },
+        { cinemaName:'Sun Plaza',           screenType:'IMAX 2D',    price:65000, times:['13:00','16:00','20:00'] },
+        { cinemaName:'Hermes Place',        screenType:'REGULAR 2D', price:35000, times:['13:30','16:00','18:30'] },
+      ],
+    };
+
+    // ── MOVIES ──────────────────────────────────────────────────────────────────
+    const CDN_IMG = 'https://cdn.jsdelivr.net/gh/dnx123532/video_and_image@main/images';
+    const CDN_VID = 'https://raw.githubusercontent.com/dnx123532/video_and_image/main/videos';
+
+    const MOVIES = [
+      {
+        title: 'Avengers: Endgame',
+        genre: 'Action, Adventure, Sci-Fi',
+        imagePath: `${CDN_IMG}/avengerendgame.webp`,
+        trailerPath: `${CDN_VID}/avengerendgame.mp4`,
+        synopsis: 'Setelah Thanos menghancurkan setengah makhluk hidup di alam semesta, para Avengers yang tersisa bersatu untuk membalikkan keadaan dan mengalahkan Thanos sekali dan untuk selamanya.',
+        duration: '181 min',
+        rating: 8.4,
+        year: '2019',
+        ageRating: '13+',
+        cast: 'Robert Downey Jr., Chris Evans, Scarlett Johansson',
+      },
+      {
+        title: 'Avengers: Infinity War',
+        genre: 'Action, Adventure, Sci-Fi',
+        imagePath: `${CDN_IMG}/avengersinfinitywar.jpeg`,
+        trailerPath: `${CDN_VID}/infinitywar.mp4`,
+        synopsis: 'Para Avengers dan sekutu mereka harus bersedia mengorbankan segalanya untuk mengalahkan Thanos yang perkasa sebelum kebrutalan dan kegilaannya memusnahkan seluruh alam semesta.',
+        duration: '149 min',
+        rating: 8.4,
+        year: '2018',
+        ageRating: '13+',
+        cast: 'Robert Downey Jr., Chris Hemsworth, Josh Brolin',
+      },
+      {
+        title: 'Chainsaw Man',
+        genre: 'Action, Dark Fantasy, Anime',
+        imagePath: `${CDN_IMG}/chainsawman.jpeg`,
+        trailerPath: `${CDN_VID}/chainsawman.mp4`,
+        synopsis: 'Denji, seorang pemuda miskin yang bekerja sebagai pemburu iblis, bersatu dengan anjing setannya Pochita dan menjadi Chainsaw Man — setengah manusia setengah iblis dengan gergaji di tubuhnya.',
+        duration: '120 min',
+        rating: 8.5,
+        year: '2022',
+        ageRating: '17+',
+        cast: 'Kikunosuke Toya, Tomori Kusunoki, Shiori Izawa',
+      },
+      {
+        title: 'Jujutsu Kaisen',
+        genre: 'Action, Supernatural, Anime',
+        imagePath: `${CDN_IMG}/jujutsukaisen.jpeg`,
+        trailerPath: `${CDN_VID}/jujutsukaisen.mp4`,
+        synopsis: 'Yuji Itadori seorang siswa SMA dengan kekuatan fisik luar biasa bergabung dengan organisasi rahasia penyihir setelah menelan kutukan tertinggi Ryomen Sukuna.',
+        duration: '105 min',
+        rating: 8.6,
+        year: '2021',
+        ageRating: '15+',
+        cast: 'Junya Enoki, Yuma Uchida, Yuichi Nakamura',
+      },
+      {
+        title: 'Look Back',
+        genre: 'Drama, Slice of Life, Anime',
+        imagePath: `${CDN_IMG}/lookback.jpeg`,
+        trailerPath: `${CDN_VID}/lookback.mp4`,
+        synopsis: 'Dua gadis muda yang sama-sama mencintai manga menjalin persahabatan yang tulus dan mengharukan melewati waktu, impian, dan kehilangan.',
+        duration: '58 min',
+        rating: 8.7,
+        year: '2024',
+        ageRating: 'SU',
+        cast: 'Mizuki Yoshida, Haruka Shiraishi',
+      },
+      {
+        title: 'Now You See Me',
+        genre: 'Crime, Mystery, Thriller',
+        imagePath: `${CDN_IMG}/nowyouseeme.jpeg`,
+        trailerPath: `${CDN_VID}/nowyouseeme.mp4`,
+        synopsis: 'Empat pesulap melakukan perampokan spektakuler saat pertunjukan mereka dan menyebarkan hasilnya ke penonton, sementara FBI dan agen Interpol memburu mereka.',
+        duration: '115 min',
+        rating: 7.3,
+        year: '2013',
+        ageRating: '13+',
+        cast: 'Jesse Eisenberg, Mark Ruffalo, Woody Harrelson, Isla Fisher',
+      },
+      {
+        title: 'One For All',
+        genre: 'Action, Superhero, Anime',
+        imagePath: `${CDN_IMG}/oneforall.jpeg`,
+        trailerPath: `${CDN_VID}/oneforall.mp4`,
+        synopsis: 'Izuku Midoriya, terlahir tanpa kekuatan super di dunia yang dipenuhi hero, mewarisi kemampuan terkuat dari hero nomor satu dan memulai perjalanannya menjadi hero terbesar.',
+        duration: '112 min',
+        rating: 8.1,
+        year: '2024',
+        ageRating: 'SU',
+        cast: 'Daiki Yamashita, Kenta Miyake, Nobuhiko Okamoto',
+      },
+      {
+        title: 'The Conjuring',
+        genre: 'Horror, Mystery, Thriller',
+        imagePath: `${CDN_IMG}/theconjuring.webp`,
+        trailerPath: `${CDN_VID}/theconjuring.mp4`,
+        synopsis: 'Paranormal investigator Ed dan Lorraine Warren menyelidiki aktivitas supranatural yang menghantui keluarga Perron di rumah terpencil mereka di Rhode Island.',
+        duration: '112 min',
+        rating: 7.5,
+        year: '2013',
+        ageRating: '17+',
+        cast: 'Patrick Wilson, Vera Farmiga, Ron Livingston',
+      },
+      {
+        title: 'The Dark Knight',
+        genre: 'Action, Crime, Drama',
+        imagePath: `${CDN_IMG}/thedarkknight.jpeg`,
+        trailerPath: `${CDN_VID}/thedarkknight.mp4`,
+        synopsis: 'Batman menghadapi kekacauan yang ditimbulkan oleh Joker, seorang penjahat misterius yang merencanakan kekacauan besar untuk membuktikan bahwa semua orang bisa korup.',
+        duration: '152 min',
+        rating: 9.0,
+        year: '2008',
+        ageRating: '13+',
+        cast: 'Christian Bale, Heath Ledger, Aaron Eckhart',
+      },
+      {
+        title: 'Toy Story 4',
+        genre: 'Animation, Adventure, Comedy',
+        imagePath: `${CDN_IMG}/toystory4.jpeg`,
+        trailerPath: `${CDN_VID}/toystory4.mp4`,
+        synopsis: 'Woody, Buzz, dan teman-teman mainan lainnya memulai petualangan baru saat Bonnie membuat mainan baru bernama Forky dan mereka terlibat dalam perjalanan road trip.',
+        duration: '100 min',
+        rating: 7.7,
+        year: '2019',
+        ageRating: 'SU',
+        cast: 'Tom Hanks, Tim Allen, Annie Potts',
+      },
+    ];
+
+    // ── SEED ────────────────────────────────────────────────────────────────────
+
+    function log(msg, cls) {
+      const el = document.getElementById('log');
+      el.innerHTML += `<span class="${cls||''}">${msg}\n</span>`;
+    }
+
+    function adminLog(msg, cls) {
+      const el = document.getElementById('admin-log');
+      el.innerHTML = `<span class="${cls||''}">${msg}</span>`;
+    }
+
+    async function setAdmin() {
+      const uid = document.getElementById('uid-input').value.trim();
+      if (!uid) {
+        adminLog('⚠️ Masukkan UID terlebih dahulu!', 'err');
+        return;
+      }
+      const btn = document.getElementById('admin-btn');
+      btn.disabled = true;
+      adminLog('⏳ Menyimpan...');
+      try {
+        await db.collection('admins').doc(uid).set({
+          role: 'admin',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        adminLog(`✅ Berhasil! UID "${uid}" sekarang adalah admin.\nLogin ulang di app untuk mengaktifkan akses.`, 'ok');
+      } catch (e) {
+        adminLog(`❌ Gagal: ${e.message}`, 'err');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function deleteAllMovies() {
+      const btn = document.getElementById('del-btn');
+      const logEl = document.getElementById('del-log');
+      btn.disabled = true;
+      logEl.innerHTML = '<span>⏳ Menghapus semua film...</span>';
+      try {
+        const snap = await db.collection('movies').get();
+        if (snap.empty) {
+          logEl.innerHTML = '<span class="ok">✅ Koleksi movies sudah kosong.</span>';
+          btn.disabled = false;
+          return;
+        }
+        // Hapus per-batch (max 500 per batch)
+        let deleted = 0;
+        const chunks = [];
+        let chunk = db.batch();
+        let count = 0;
+        snap.forEach(doc => {
+          chunk.delete(doc.ref);
+          count++;
+          if (count === 499) {
+            chunks.push(chunk);
+            chunk = db.batch();
+            count = 0;
+          }
+        });
+        if (count > 0) chunks.push(chunk);
+        for (const b of chunks) await b.commit();
+        deleted = snap.size;
+        logEl.innerHTML = `<span class="ok">✅ ${deleted} film berhasil dihapus. Sekarang klik "Mulai Seed Data".</span>`;
+      } catch (e) {
+        logEl.innerHTML = `<span class="err">❌ Gagal: ${e.message}</span>`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function runSeed() {
+      const btn = document.getElementById('btn');
+      btn.disabled = true;
+      document.getElementById('log').innerHTML = '';
+      log('🚀 Memulai seed...');
+
+      try {
+        // ── Food Items ──
+        log('\n📦 Menyimpan food_items...');
+        const batch1 = db.batch();
+        for (const item of FOOD_ITEMS) {
+          const ref = db.collection('food_items').doc(item.id);
+          batch1.set(ref, item);
+        }
+        await batch1.commit();
+        log(`✅ food_items: ${FOOD_ITEMS.length} dokumen berhasil`, 'ok');
+
+        // ── Cinemas ──
+        log('\n🎬 Menyimpan cinemas...');
+        let cinemaCount = 0;
+        for (const [city, schedules] of Object.entries(CINEMAS)) {
+          const batch2 = db.batch();
+          for (let i = 0; i < schedules.length; i++) {
+            const ref = db.collection('cinemas').doc(`${city}_${i}`);
+            batch2.set(ref, { city, ...schedules[i] });
+            cinemaCount++;
+          }
+          await batch2.commit();
+          log(`  ✔ ${city}: ${schedules.length} jadwal`, 'ok');
+        }
+        log(`\n✅ cinemas: ${cinemaCount} dokumen berhasil`, 'ok');
+
+        // ── Movies: hapus dulu semua yang lama, baru seed baru ──
+        log('\n🗑️ Menghapus movies lama...');
+        const oldSnap = await db.collection('movies').get();
+        if (!oldSnap.empty) {
+          const delBatch = db.batch();
+          oldSnap.forEach(doc => delBatch.delete(doc.ref));
+          await delBatch.commit();
+          log(`  ✔ ${oldSnap.size} film lama dihapus`, 'ok');
+        }
+
+        log('🎥 Menyimpan movies baru...');
+        const batch3 = db.batch();
+        for (const movie of MOVIES) {
+          const ref = db.collection('movies').doc(movie.title);
+          batch3.set(ref, movie);
+        }
+        await batch3.commit();
+        log(`✅ movies: ${MOVIES.length} film berhasil diseed`, 'ok');
+
+        log('\n🎉 SELESAI! Buka Firebase Console untuk memverifikasi.', 'ok');
+      } catch (e) {
+        log(`\n❌ Error: ${e.message}`, 'err');
+        log('Pastikan Firestore sudah aktif dan rules mengizinkan write (test mode).', 'err');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
