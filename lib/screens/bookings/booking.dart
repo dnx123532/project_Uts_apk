@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart ';
+import 'package:flutter/material.dart';
 import 'package:project_uts_apk/models/booking_model.dart';
 import 'package:project_uts_apk/providers/movie_provider.dart';
 import 'package:project_uts_apk/widgets/app_image.dart';

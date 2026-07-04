@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart ';
+import 'package:flutter/material.dart';
 import 'package:project_uts_apk/models/booking_model.dart';
 import 'package:project_uts_apk/providers/movie_provider.dart';
 import 'package:project_uts_apk/widgets/app_image.dart';
@@ -116,7 +116,10 @@ class PaymentSuccessScreen extends StatelessWidget {
                                     width: 60,
                                     height: 80,
                                     color: Colors.white24,
-                                    child: const Icon(Icons.movie, color: Colors.white54),
+                                    child: const Icon(
+                                      Icons.movie,
+                                      color: Colors.white54,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 14),

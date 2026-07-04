@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart ';
+import 'package:flutter/material.dart';
 import 'package:project_uts_apk/data/data_film.dart';
 import 'package:project_uts_apk/models/booking_model.dart';
 import 'package:project_uts_apk/providers/movie_provider.dart';
@@ -32,14 +32,17 @@ class _BookingHistoryPageState extends State<BookingHistoryPage>
   bool _isPast(BookingItem b) {
     if (b.seats.isEmpty) {
       // F&B only — cek tanggal saja
-      return b.date.isBefore(DateTime(
-        DateTime.now().year, DateTime.now().month, DateTime.now().day,
-      ));
+      return b.date.isBefore(
+        DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
+      );
     }
     final parts = b.time.split(':');
     final showtime = DateTime(
-      b.date.year, b.date.month, b.date.day,
-      int.parse(parts[0]), int.parse(parts[1]),
+      b.date.year,
+      b.date.month,
+      b.date.day,
+      int.parse(parts[0]),
+      int.parse(parts[1]),
     );
     return showtime.isBefore(DateTime.now());
   }
@@ -76,7 +79,11 @@ class _BookingHistoryPageState extends State<BookingHistoryPage>
                 padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Text(
                   'Tiket Saya',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1A237E)),
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A237E),
+                  ),
                 ),
               ),
               TabBar(
@@ -85,7 +92,10 @@ class _BookingHistoryPageState extends State<BookingHistoryPage>
                 unselectedLabelColor: Colors.grey,
                 indicatorColor: const Color(0xFF1A237E),
                 indicatorWeight: 2.5,
-                labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                labelStyle: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
                 tabs: const [
                   Tab(text: 'Mendatang'),
                   Tab(text: 'Riwayat'),
@@ -124,7 +134,11 @@ class _BookingHistoryPageState extends State<BookingHistoryPage>
     );
   }
 
-  Widget _buildList(List<BookingItem> bookings, {required bool isHistory, required Map<String, String> imageMap}) {
+  Widget _buildList(
+    List<BookingItem> bookings, {
+    required bool isHistory,
+    required Map<String, String> imageMap,
+  }) {
     if (bookings.isEmpty) {
       return Center(
         child: Column(
@@ -138,11 +152,17 @@ class _BookingHistoryPageState extends State<BookingHistoryPage>
             const SizedBox(height: 16),
             Text(
               isHistory ? 'Belum ada riwayat' : 'Belum ada tiket mendatang',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A237E)),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1A237E),
+              ),
             ),
             const SizedBox(height: 8),
             Text(
-              isHistory ? 'Pesanan yang sudah lewat akan tampil di sini' : 'Pesan tiket film pertamamu sekarang!',
+              isHistory
+                  ? 'Pesanan yang sudah lewat akan tampil di sini'
+                  : 'Pesan tiket film pertamamu sekarang!',
               style: const TextStyle(color: Colors.grey, fontSize: 13),
               textAlign: TextAlign.center,
             ),
@@ -189,7 +209,9 @@ class _BookingHistoryPageState extends State<BookingHistoryPage>
                     width: 90,
                     height: 120,
                     fit: BoxFit.cover,
-                    borderRadius: const BorderRadius.horizontal(left: Radius.circular(14)),
+                    borderRadius: const BorderRadius.horizontal(
+                      left: Radius.circular(14),
+                    ),
                     errorWidget: Container(
                       width: 90,
                       height: 120,
@@ -207,24 +229,39 @@ class _BookingHistoryPageState extends State<BookingHistoryPage>
                         children: [
                           Text(
                             title,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 6),
-                          Text(b.cinemaName, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                          Text(
+                            b.cinemaName,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
                           const SizedBox(height: 4),
                           Text(
                             b.seats.isEmpty
                                 ? '${_fmtDate(b.date)}  •  Pesanan F&B'
                                 : '${_fmtDate(b.date)}  •  ${b.time}',
-                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: isHistory
                                       ? Colors.grey.withValues(alpha: 0.12)
@@ -234,7 +271,9 @@ class _BookingHistoryPageState extends State<BookingHistoryPage>
                                 child: Text(
                                   isHistory ? 'Selesai' : 'Aktif',
                                   style: TextStyle(
-                                    color: isHistory ? Colors.grey : Colors.green,
+                                    color: isHistory
+                                        ? Colors.grey
+                                        : Colors.green,
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -243,7 +282,11 @@ class _BookingHistoryPageState extends State<BookingHistoryPage>
                               const Spacer(),
                               Text(
                                 _fmt(b.grandTotal),
-                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1A237E)),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1A237E),
+                                ),
                               ),
                               const SizedBox(width: 12),
                             ],

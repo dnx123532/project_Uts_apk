@@ -735,7 +735,9 @@ class _TrailerScreenState extends State<_TrailerScreen> {
 
   Future<void> _init() async {
     try {
-      _controller = VideoPlayerController.asset(widget.trailerPath);
+      _controller = widget.trailerPath.startsWith('http')
+          ? VideoPlayerController.networkUrl(Uri.parse(widget.trailerPath))
+          : VideoPlayerController.asset(widget.trailerPath);
       await _controller.initialize();
       if (!mounted) return;
       _controller.setLooping(false);

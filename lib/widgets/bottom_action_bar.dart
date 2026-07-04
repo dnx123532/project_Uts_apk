@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart ';
+import 'package:flutter/material.dart';
 // ─── HELPER WIDGETS ───────────────────────────────────────────────────────────
 
 class BottomActionBar extends StatelessWidget {
